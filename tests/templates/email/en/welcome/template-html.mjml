@@ -1,0 +1,22 @@
+<mjml>
+  <mj-head>
+    <mj-title>Welcome to {{ appName }}!</mj-title>
+    <mj-preview>Welcome {{ name }}!</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Arial, sans-serif" />
+      <mj-text color="#333" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-text font-size="24px" align="center" font-weight="bold">Welcome to {{ appName }}!</mj-text>
+        <mj-text>Hi {{ name }},</mj-text>
+        <mj-text>Welcome to {{ appName }}! We're excited to have you on board.{% if isTrialUser %} You're starting with a {{ trialDays }}-day free trial.{% endif %}</mj-text>
+        {% if ctaUrl %}<mj-button href="{{ ctaUrl }}">{{ ctaText | default: 'Get Started' }}</mj-button>{% endif %}
+        <mj-text font-size="14px" color="#666">Questions? Email <a href="mailto:{{ supportEmail }}">{{ supportEmail }}</a></mj-text>
+        <mj-text font-size="12px" color="#999" align="center">&copy; 2025 {{ appName }}. All rights reserved.</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

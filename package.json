@@ -1,0 +1,121 @@
+{
+  "name": "crunchycone-lib",
+  "version": "0.1.0",
+  "description": "TypeScript library providing abstractions for CrunchyCone Starter Projects",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./auth": {
+      "import": "./dist/auth/index.js",
+      "require": "./dist/auth/index.js",
+      "types": "./dist/auth/index.d.ts"
+    },
+    "./email": {
+      "import": "./dist/services/email/index.js",
+      "require": "./dist/services/email/index.js",
+      "types": "./dist/services/email/index.d.ts"
+    },
+    "./email/templates": {
+      "import": "./dist/services/email/templates/index.js",
+      "require": "./dist/services/email/templates/index.js",
+      "types": "./dist/services/email/templates/index.d.ts"
+    },
+    "./storage": {
+      "import": "./dist/services/storage/index.js",
+      "require": "./dist/services/storage/index.js",
+      "types": "./dist/services/storage/index.d.ts"
+    },
+    "./api-external": {
+      "import": "./dist/api-external/index.js",
+      "require": "./dist/api-external/index.js",
+      "types": "./dist/api-external/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src tests --ext .ts",
+    "lint:fix": "eslint src tests --ext .ts --fix",
+    "email-test": "ts-node src/cli/email-test.ts",
+    "email-templates-example": "ts-node src/cli/email-templates-example.ts",
+    "storage-test": "ts-node src/cli/storage-test.ts",
+    "storage-cli": "ts-node src/cli/storage-test-cli.ts"
+  },
+  "keywords": [
+    "crunchycone",
+    "typescript",
+    "abstractions",
+    "library",
+    "email-providers",
+    "email-templating",
+    "email-templates"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@aws-sdk/client-s3": "^3.540.0",
+    "@aws-sdk/client-ses": "^3.540.0",
+    "@aws-sdk/s3-request-presigner": "^3.540.0",
+    "@azure/storage-blob": "^12.0.0",
+    "@google-cloud/storage": "^7.0.0",
+    "@types/html-to-text": "^9.0.4",
+    "@types/jest": "^30.0.0",
+    "@types/mjml": "^4.7.4",
+    "@types/node": "^20.0.0",
+    "@types/nodemailer": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.40.0",
+    "@typescript-eslint/parser": "^8.40.0",
+    "commander": "^14.0.0",
+    "dotenv": "^17.2.1",
+    "eslint": "^9.33.0",
+    "jest": "^30.0.5",
+    "keytar": "^7.9.0",
+    "mjml": "^4.15.3",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.0",
+    "html-to-text": "^9.0.5",
+    "liquidjs": "^10.21.1",
+    "nodemailer": "^7.0.5",
+    "resend": "^6.0.1"
+  },
+  "peerDependencies": {
+    "@aws-sdk/client-s3": "^3.0.0",
+    "@aws-sdk/client-ses": "^3.0.0",
+    "@aws-sdk/s3-request-presigner": "^3.0.0",
+    "@azure/storage-blob": "^12.0.0",
+    "@google-cloud/storage": "^7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@aws-sdk/client-s3": {
+      "optional": true
+    },
+    "@aws-sdk/client-ses": {
+      "optional": true
+    },
+    "@aws-sdk/s3-request-presigner": {
+      "optional": true
+    },
+    "@google-cloud/storage": {
+      "optional": true
+    },
+    "@azure/storage-blob": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Juan Pérez",
+  "appName": "CrunchyCone",
+  "supportEmail": "support@crunchycone.com",
+  "ctaUrl": "https://app.crunchycone.com/dashboard",
+  "ctaText": "Comenzar",
+  "isTrialUser": true,
+  "trialDays": 7
+}

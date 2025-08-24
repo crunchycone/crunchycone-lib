@@ -1,0 +1,14 @@
+{
+  "ext_1755635642443_6b482ae20fb30bf6836ec225": {
+    "external_id": "ext_1755635642443_6b482ae20fb30bf6836ec225",
+    "key": "files/ext_1755635642443_6b482ae20fb30bf6836ec225-1755635642444.txt",
+    "filename": "test-file.txt",
+    "contentType": "text/plain",
+    "size": 103,
+    "lastModified": "2025-08-19T20:34:02.447Z",
+    "metadata": {
+      "testUpload": "true",
+      "environment": "development"
+    }
+  }
+}

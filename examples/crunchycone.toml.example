@@ -1,0 +1,17 @@
+# CrunchyCone Configuration File
+# This file should be placed in the root of your project
+
+# Environment configuration
+# Supported values: "dev", "prod", "staging"
+# - "dev" will use https://api.crunchycone.dev
+# - Any other value will use https://api.crunchycone.com
+environment = "dev"
+
+# Project configuration
+[project]
+id = "your-project-id-here"
+
+# Example production configuration:
+# environment = "prod"
+# [project]
+# id = "prod-project-id"

@@ -1,0 +1,12 @@
+Welcome to {{ appName }}!
+
+Hi {{ name }},
+
+Welcome to {{ appName }}! We're excited to have you on board.
+{% if isTrialUser %}You're starting with a {{ trialDays }}-day free trial.{% endif %}
+
+{% if ctaUrl %}{{ ctaText | default: 'Get Started' }}: {{ ctaUrl }}{% endif %}
+
+If you have any questions, feel free to reach out to our support team at {{ supportEmail }}.
+
+© 2025 {{ appName }}. All rights reserved.

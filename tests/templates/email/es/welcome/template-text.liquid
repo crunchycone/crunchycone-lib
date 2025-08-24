@@ -1,0 +1,12 @@
+¡Bienvenido a {{ appName }}!
+
+Hola {{ name }},
+
+¡Bienvenido a {{ appName }}! Estamos emocionados de tenerte a bordo.
+{% if isTrialUser %}Estás comenzando con una prueba gratuita de {{ trialDays }} días.{% endif %}
+
+{% if ctaUrl %}{{ ctaText | default: 'Comenzar' }}: {{ ctaUrl }}{% endif %}
+
+Si tienes alguna pregunta, no dudes en contactar a nuestro equipo de soporte en {{ supportEmail }}.
+
+© 2025 {{ appName }}. Todos los derechos reservados.

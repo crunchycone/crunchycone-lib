@@ -1,0 +1,9 @@
+{
+  "name": "John Doe",
+  "appName": "CrunchyCone",
+  "supportEmail": "support@crunchycone.com",
+  "ctaUrl": "https://app.crunchycone.com/dashboard",
+  "ctaText": "Get Started",
+  "isTrialUser": true,
+  "trialDays": 14
+}

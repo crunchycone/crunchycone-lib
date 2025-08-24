@@ -1,0 +1,20 @@
+<mjml>
+  <mj-head>
+    <mj-title>Bienvenido a {{ appName }}</mj-title>
+    <mj-preview>Bienvenido {{ name }}</mj-preview>
+  </mj-head>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-text>
+          <h1>Bienvenido a {{ appName }}</h1>
+          <p>Hola {{ name }},</p>
+          <p>Bienvenido a {{ appName }}! Estamos emocionados de tenerte a bordo.{% if isTrialUser %} Estas comenzando con una prueba gratuita de {{ trialDays }} dias.{% endif %}</p>
+          {% if ctaUrl %}<p><a href="{{ ctaUrl }}" style="background:#007BFF;color:white;padding:10px 20px;text-decoration:none;border-radius:4px">{{ ctaText | default: 'Comenzar' }}</a></p>{% endif %}
+          <p><small>Preguntas? Email <a href="mailto:{{ supportEmail }}">{{ supportEmail }}</a></small></p>
+          <p><small>2025 {{ appName }}. Todos los derechos reservados.</small></p>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
