@@ -9,7 +9,8 @@ export {
 } from './types';
 
 export { FilesystemTemplateProvider } from './providers/filesystem';
-export { MJMLLiquidEngine } from './engines/mjml-liquid';
+// Note: MJMLLiquidEngine is available via specific import to avoid loading MJML at import time:
+// - import { MJMLLiquidEngine } from 'crunchycone-lib/email/templates/engines/mjml-liquid'
 export { 
   createTemplateProvider, 
   createEmailTemplateEngine, 

@@ -1,6 +1,6 @@
 {
   "name": "crunchycone-lib",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "TypeScript library providing abstractions for CrunchyCone Starter Projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -27,6 +27,11 @@
       "import": "./dist/services/email/templates/index.js",
       "require": "./dist/services/email/templates/index.js",
       "types": "./dist/services/email/templates/index.d.ts"
+    },
+    "./email/templates/engines/mjml-liquid": {
+      "import": "./dist/services/email/templates/engines/mjml-liquid.js",
+      "require": "./dist/services/email/templates/engines/mjml-liquid.js",
+      "types": "./dist/services/email/templates/engines/mjml-liquid.d.ts"
     },
     "./email/providers/amazon-ses": {
       "import": "./dist/services/email/providers/amazon-ses.js",

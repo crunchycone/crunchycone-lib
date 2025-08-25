@@ -15,7 +15,7 @@ import {
  */
 async function loadMJML(): Promise<any> {
   try {
-    // In test environments or when NODE_ENV is test, use require instead of dynamic import
+    // In test environments, use require to avoid dynamic import issues with Jest
     const isTestEnv = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
     
     if (isTestEnv) {
@@ -27,15 +27,18 @@ async function loadMJML(): Promise<any> {
       const mjml = await eval('import("mjml")');
       return mjml.default || mjml;
     }
-  } catch (_error) {
-    throw new Error(
-      'MJML is not available. Email template rendering with MJML requires the mjml package to be installed.\n\n' +
-      'To install MJML, run:\n' +
-      '  npm install mjml\n\n' +
-      'Or if using yarn:\n' +
-      '  yarn add mjml\n\n' +
-      'MJML is used for rendering responsive email templates and is required for the MJMLLiquidEngine.',
-    );
+  } catch (error: any) {
+    if (error.code === 'MODULE_NOT_FOUND' || error.message?.includes('Cannot resolve module')) {
+      throw new Error(
+        'MJML is not available. Email template rendering with MJML requires the mjml package to be installed.\n\n' +
+        'To install MJML, run:\n' +
+        '  npm install mjml\n\n' +
+        'Or if using yarn:\n' +
+        '  yarn add mjml\n\n' +
+        'MJML is used for rendering responsive email templates and is required for the MJMLLiquidEngine.',
+      );
+    }
+    throw error;
   }
 }
 

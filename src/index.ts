@@ -11,8 +11,30 @@ export {
   formatEmailForProvider, 
 } from './services/email/utils';
 
-// Email Template Services (no optional dependencies)
-export * from './services/email/templates';
+// Email Template Services - Import directly to avoid loading engines at import time
+export { 
+  EmailTemplateOptions,
+  TemplateData,
+  RenderedTemplate,
+  TemplateMetadata,
+  TemplateProvider,
+  EmailTemplateEngine,
+  TemplateProviderType,
+} from './services/email/templates/types';
+export { FilesystemTemplateProvider } from './services/email/templates/providers/filesystem';
+export { 
+  createTemplateProvider, 
+  createEmailTemplateEngine, 
+  getEmailTemplateEngine, 
+} from './services/email/templates/factory';
+export { 
+  EmailTemplateService, 
+  getEmailTemplateService, 
+  sendTemplatedEmail, 
+} from './services/email/templates/service';
+
+// Note: Template engines are available via specific imports:
+// - import { MJMLLiquidEngine } from 'crunchycone-lib/email/templates/engines/mjml-liquid'
 
 // Authentication utilities (no optional dependencies)
 export * from './auth';
