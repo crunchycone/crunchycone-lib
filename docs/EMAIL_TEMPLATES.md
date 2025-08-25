@@ -1,6 +1,6 @@
 # Email Templates System
 
-The CrunchyCone library includes a powerful email templates system that uses MJML for responsive email design and Liquid for templating logic.
+The CrunchyCone library includes a powerful email templates system that uses MJML (optional dependency) for responsive email design and Liquid for templating logic.
 
 ## Features
 
@@ -17,11 +17,17 @@ The CrunchyCone library includes a powerful email templates system that uses MJM
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Install Optional Dependencies
 
 ```bash
-npm install mjml liquidjs html-to-text
-npm install --save-dev @types/mjml @types/html-to-text
+# MJML is required for responsive email templates
+npm install mjml
+npm install --save-dev @types/mjml
+
+# Note: liquidjs and html-to-text are included as core dependencies
+
+# Import MJML engine when needed (requires MJML to be installed)
+import { MJMLLiquidEngine } from 'crunchycone-lib/email/templates/engines/mjml-liquid';
 ```
 
 ### 2. Create Template Structure

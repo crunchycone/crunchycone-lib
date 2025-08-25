@@ -34,10 +34,10 @@ A comprehensive TypeScript library providing unified abstractions for email serv
 npm install crunchycone-lib
 ```
 
-### Peer Dependencies (Install as needed)
+### Optional Dependencies (Install as needed)
 
 ```bash
-# For AWS services
+# For AWS services (S3 storage, SES email)
 npm install @aws-sdk/client-s3 @aws-sdk/client-ses @aws-sdk/s3-request-presigner
 
 # For Google Cloud Storage
@@ -46,9 +46,11 @@ npm install @google-cloud/storage
 # For Azure Storage
 npm install @azure/storage-blob
 
-# For email templating
-npm install mjml liquidjs html-to-text
-npm install --save-dev @types/mjml @types/html-to-text
+# For MJML email templating (responsive email templates)
+npm install mjml
+npm install --save-dev @types/mjml
+
+# Note: liquidjs and html-to-text are included as dependencies
 ```
 
 ## 🔧 Quick Start
@@ -184,7 +186,7 @@ import { createEmailService, EmailService } from 'crunchycone-lib';
 // Email services (no optional dependencies)
 import { createEmailService } from 'crunchycone-lib/email';
 
-// Email templates (no optional dependencies)
+// Email templates (core functionality, no optional dependencies)
 import { createEmailTemplateService } from 'crunchycone-lib/email/templates';
 
 // Storage services (loads core without providers)
@@ -200,20 +202,31 @@ import { S3CompatibleProvider } from 'crunchycone-lib/storage/providers/s3';
 import { GCPStorageProvider } from 'crunchycone-lib/storage/providers/gcp';
 import { AzureStorageProvider } from 'crunchycone-lib/storage/providers/azure';
 
+// Template engines (only loads when imported)
+import { MJMLLiquidEngine } from 'crunchycone-lib/email/templates/engines/mjml-liquid';
+
 // Next.js API helpers
 import { createApiHandler } from 'crunchycone-lib/api-external';
 ```
 
 ### 🎯 **Zero Optional Dependencies at Import**
 
-The main entry point (`crunchycone-lib`) and core modules can be imported **without installing any optional cloud provider SDKs**. Optional dependencies are only required when you import and use specific providers.
+The main entry point (`crunchycone-lib`) and core modules can be imported **without installing any optional dependencies** (cloud provider SDKs, MJML, etc.). Optional dependencies are only required when you import and use specific providers or template engines.
 
-**Example: Email-only usage** (no storage or cloud dependencies needed):
+**Example: Email-only usage** (no storage, cloud, or MJML dependencies needed):
 ```typescript
 import { createEmailService } from 'crunchycone-lib';
 
-// Only requires core dependencies - works without AWS, Azure, or GCP SDKs!
+// Only requires core dependencies - works without AWS, Azure, GCP SDKs, or MJML!
 const emailService = createEmailService('console');
+```
+
+**Example: MJML templates** (requires MJML to be installed):
+```typescript
+import { MJMLLiquidEngine } from 'crunchycone-lib/email/templates/engines/mjml-liquid';
+
+// Requires: npm install mjml
+const mjmlEngine = new MJMLLiquidEngine(templateProvider);
 ```
 
 ## 🧪 Testing
