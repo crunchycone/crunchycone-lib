@@ -488,22 +488,22 @@ describe('CrunchyConeProvider', () => {
             upload_status: 'completed',
             metadata: {},
             uploaded_at: '2023-01-01T00:00:00Z',
-          }
-        })
+          },
+        }),
       });
 
       // Mock the signed URL response
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
-          data: { signedUrl: 'https://signed-url.example.com/file.txt' }
-        })
+          data: { signedUrl: 'https://signed-url.example.com/file.txt' },
+        }),
       });
 
       // Mock the signed URL content test
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        text: () => Promise.resolve('test content')
+        text: () => Promise.resolve('test content'),
       });
 
       const result = await provider.getFileUrlByExternalId('test-external-id');
@@ -526,22 +526,22 @@ describe('CrunchyConeProvider', () => {
             upload_status: 'completed',
             metadata: {},
             uploaded_at: '2023-01-01T00:00:00Z',
-          }
-        })
+          },
+        }),
       });
 
       // Mock the signed URL response
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({
-          data: { signedUrl: 'https://signed-url.example.com/file-with-spaces.txt' }
-        })
+          data: { signedUrl: 'https://signed-url.example.com/file-with-spaces.txt' },
+        }),
       });
 
       // Mock the signed URL content test
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        text: () => Promise.resolve('test content')
+        text: () => Promise.resolve('test content'),
       });
 
       const result = await provider.getFileUrlByExternalId('test-external-id with spaces');
@@ -678,16 +678,16 @@ describe('CrunchyConeProvider', () => {
               content_type: 'text/plain',
               actual_file_size: 100,
               upload_status: 'completed',
-            }]
-          }
-        })
+            }],
+          },
+        }),
       });
 
       // Mock metadata update
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({})
+        json: () => Promise.resolve({}),
       });
 
       const result = await provider.setFileVisibility('test-key', 'public');
@@ -711,10 +711,10 @@ describe('CrunchyConeProvider', () => {
             files: [{
               file_id: 'test-file-id',
               storage_key: 'test-key',
-              metadata: { visibility: 'public' }
-            }]
-          }
-        })
+              metadata: { visibility: 'public' },
+            }],
+          },
+        }),
       });
 
       const result = await provider.getFileVisibility('test-key');

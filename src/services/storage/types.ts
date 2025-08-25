@@ -26,6 +26,10 @@ export interface StorageProvider {
   
   // Optional bulk operations (providers can throw "not implemented")
   setMultipleFileVisibility?(keys: string[], visibility: 'public' | 'private'): Promise<FileVisibilityResult[]>;
+  
+  // File streaming operations (optional - not all providers implement)
+  getFileStream?(key: string, options?: FileStreamOptions): Promise<FileStreamResult>;
+  getFileStreamByExternalId?(externalId: string, options?: FileStreamOptions): Promise<FileStreamResult>;
 }
 
 export interface StorageUploadOptions {
@@ -251,4 +255,54 @@ export interface FileVisibilityStatus {
   canMakePrivate: boolean; // Whether this provider/file supports making private
   supportsTemporaryAccess: boolean; // Whether provider supports temporary public access
   message?: string; // Additional information about current status
+}
+
+// File streaming types
+export interface FileStreamOptions {
+  // Range request support for partial content
+  start?: number;                   // Byte offset to start streaming from
+  end?: number;                     // Byte offset to end streaming at
+  
+  // Stream type preference
+  responseType?: 'node' | 'web';    // Type of stream to return (default: 'node')
+  
+  // Request control
+  signal?: AbortSignal;             // For request cancellation
+  timeout?: number;                 // Request timeout in milliseconds
+  
+  // Headers and metadata
+  includeMetadata?: boolean;        // Whether to include file metadata (default: true)
+}
+
+export interface FileStreamResult {
+  // The actual stream
+  stream: NodeJS.ReadableStream | ReadableStream;
+  
+  // Content information
+  contentType: string;
+  contentLength?: number;           // Total file size, undefined for unknown/chunked
+  lastModified?: Date;
+  etag?: string;
+  
+  // Range request information
+  acceptsRanges?: boolean;          // Whether the source supports range requests
+  isPartialContent: boolean;        // Whether this is partial content (206 response)
+  range?: {
+    start: number;
+    end: number;
+    total: number;                  // Total file size
+  };
+  
+  // Stream metadata
+  streamType: 'node' | 'web';       // Type of stream returned
+  
+  // Provider-specific information
+  providerSpecific?: {
+    signedUrl?: string;             // The underlying URL (for debugging)
+    cacheControl?: string;          // Cache control headers
+    [key: string]: any;
+  };
+  
+  // Utility methods
+  cleanup?: () => Promise<void>;    // Optional cleanup function to call when done
 }

@@ -13,7 +13,6 @@ jest.mock('nodemailer');
 jest.mock('@sendgrid/mail');
 jest.mock('resend');
 jest.mock('@aws-sdk/client-ses');
-jest.mock('mailgun-js');
 
 describe('Email Service Factory', () => {
   describe('createEmailService', () => {

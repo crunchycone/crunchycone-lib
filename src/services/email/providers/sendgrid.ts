@@ -65,10 +65,12 @@ export class SendGridEmailService implements EmailService {
 
       const msg: any = {
         to: Array.isArray(params.to) ? formatEmailArrayForProvider(params.to) : formatSingleEmailForProvider(params.to),
-        from: params.from ? formatSingleEmailForProvider(params.from) : {
-          email: this.from,
-          name: this.fromDisplayName,
-        },
+        from: params.from ? formatSingleEmailForProvider(params.from) : (
+          this.fromDisplayName ? {
+            email: this.from,
+            name: this.fromDisplayName,
+          } : this.from
+        ),
         subject: params.subject,
         content,
         tracking_settings: trackingSettings,

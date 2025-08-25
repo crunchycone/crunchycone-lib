@@ -19,5 +19,7 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   clearMocks: true,
   resetMocks: true,
-  restoreMocks: true
+  restoreMocks: true,
+  // Run tests serially to avoid worker process issues with CrunchyCone auth
+  maxWorkers: 1
 };

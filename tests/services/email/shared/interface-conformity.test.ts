@@ -12,13 +12,14 @@ jest.mock('nodemailer');
 jest.mock('@sendgrid/mail');
 jest.mock('resend');
 jest.mock('@aws-sdk/client-ses');
-jest.mock('mailgun-js');
 
 // Mock fetch for CrunchyCone provider
 global.fetch = jest.fn();
 
+// Set a default API key to prevent auth issues during test setup
+process.env.CRUNCHYCONE_API_KEY = process.env.CRUNCHYCONE_API_KEY || 'test-api-key-for-jest';
+
 import sgMail from '@sendgrid/mail';
-import mailgun from 'mailgun-js';
 
 const providers = [
   {
@@ -62,7 +63,7 @@ const providers = [
 describe.each(providers)('$name Provider Interface Conformity', ({ name, class: ServiceClass, setup }) => {
   let service: EmailService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     setup();
     
     // Setup mocks based on provider
@@ -105,13 +106,13 @@ describe.each(providers)('$name Provider Interface Conformity', ({ name, class: 
     }
     
     if (name === 'Mailgun') {
-      const mockMailgun = mailgun as any;
-      const mockMG = {
-        messages: jest.fn().mockReturnValue({
-          send: jest.fn().mockResolvedValue({ id: 'mock-mailgun-id' }),
+      const mockFetch = global.fetch as jest.MockedFunction<typeof fetch>;
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          id: 'mock-mailgun-id',
         }),
-      };
-      mockMailgun.mockReturnValue(mockMG);
+      } as any);
     }
 
     if (name === 'CrunchyCone') {

@@ -1,0 +1,281 @@
+# CrunchyCone Library
+
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Apache License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-393%20passing-brightgreen.svg)]()
+[![npm version](https://img.shields.io/badge/npm-0.1.0-blue.svg)](package.json)
+
+A comprehensive TypeScript library providing unified abstractions for email services, storage providers, and template engines. Designed for CrunchyCone Starter Projects but flexible enough for any TypeScript/JavaScript application.
+
+## 🚀 Features
+
+### ✉️ Email Services
+- **Unified API** across 7+ email providers (SendGrid, Resend, Amazon SES, SMTP, Mailgun, CrunchyCone, Console)
+- **Provider abstraction** - switch providers without code changes
+- **Built-in templates** with MJML + Liquid templating
+- **Multi-language support** with automatic fallbacks
+- **Development-friendly** console provider for testing
+
+### 📁 Storage Services
+- **Multi-provider support** (AWS S3, Google Cloud, Azure Blob, CrunchyCone, LocalStorage, and more)
+- **File streaming** with range request support
+- **Metadata management** and search capabilities
+- **Public/private file visibility** controls
+- **External ID mapping** for easy integration
+
+### 🛡️ Authentication
+- **CrunchyCone Auth** integration with keychain support
+- **Environment variable** fallbacks
+- **API key management** utilities
+
+## 📦 Installation
+
+```bash
+npm install crunchycone-lib
+```
+
+### Peer Dependencies (Install as needed)
+
+```bash
+# For AWS services
+npm install @aws-sdk/client-s3 @aws-sdk/client-ses @aws-sdk/s3-request-presigner
+
+# For Google Cloud Storage
+npm install @google-cloud/storage
+
+# For Azure Storage
+npm install @azure/storage-blob
+
+# For email templating
+npm install mjml liquidjs html-to-text
+npm install --save-dev @types/mjml @types/html-to-text
+```
+
+## 🔧 Quick Start
+
+### Email Service
+
+```typescript
+import { createEmailService } from 'crunchycone-lib/email';
+
+// Create email service (uses environment variables for configuration)
+const emailService = createEmailService('sendgrid');
+
+// Send email
+const result = await emailService.sendEmail({
+  to: 'user@example.com',
+  subject: 'Hello World',
+  text: 'Hello from CrunchyCone!',
+  html: '<h1>Hello from CrunchyCone!</h1>'
+});
+
+console.log(`Email sent with ID: ${result.messageId}`);
+```
+
+### Storage Service
+
+```typescript
+import { StorageService } from 'crunchycone-lib/storage';
+
+const storage = new StorageService({
+  provider: 'crunchycone',
+  config: {
+    projectId: 'your-project-id'
+  }
+});
+
+// Upload file
+const result = await storage.uploadFile('my-file.txt', fileBuffer, {
+  externalId: 'user-avatar-123',
+  visibility: 'public'
+});
+
+// Get public URL
+const url = await storage.getFileUrl(result.key);
+console.log(`File available at: ${url}`);
+```
+
+### Email Templates
+
+```typescript
+import { createEmailTemplateService } from 'crunchycone-lib/email/templates';
+
+const templates = createEmailTemplateService({
+  provider: 'filesystem',
+  templatesPath: './templates/email'
+});
+
+// Render template with data
+const rendered = await templates.renderTemplate('welcome', 'en', {
+  userName: 'John Doe',
+  activationUrl: 'https://app.example.com/activate/123'
+});
+
+// Send templated email
+await emailService.sendEmail({
+  to: 'user@example.com',
+  subject: rendered.subject,
+  html: rendered.html,
+  text: rendered.text
+});
+```
+
+## 📚 Documentation
+
+- **[Email Providers](docs/EMAIL_PROVIDERS.md)** - Complete guide to all supported email providers
+- **[Email Templates](docs/EMAIL_TEMPLATES.md)** - MJML + Liquid templating system
+- **[Storage Providers](docs/STORAGE.md)** - File storage across multiple cloud providers
+- **[CrunchyCone Storage](docs/CRUNCHYCONE_STORAGE.md)** - CrunchyCone-specific storage features
+- **[Storage CLI](docs/STORAGE_CLI.md)** - Command-line tools for storage testing
+- **[Streaming Interface](docs/STREAMING_INTERFACE.md)** - File streaming with range requests
+
+## 🔐 Environment Variables
+
+The library uses environment variables for configuration. Here are the key ones:
+
+### Email Services
+```bash
+# SendGrid
+CRUNCHYCONE_SENDGRID_API_KEY=your_sendgrid_api_key
+CRUNCHYCONE_SENDGRID_FROM=noreply@yourapp.com
+
+# Resend
+CRUNCHYCONE_RESEND_API_KEY=your_resend_api_key
+CRUNCHYCONE_RESEND_FROM=noreply@yourapp.com
+
+# CrunchyCone
+CRUNCHYCONE_API_KEY=your_crunchycone_api_key
+```
+
+### Storage Services
+```bash
+# CrunchyCone Storage
+CRUNCHYCONE_API_KEY=your_crunchycone_api_key
+CRUNCHYCONE_PROJECT_ID=your_project_id
+
+# AWS S3
+CRUNCHYCONE_AWS_ACCESS_KEY_ID=your_access_key
+CRUNCHYCONE_AWS_SECRET_ACCESS_KEY=your_secret_key
+CRUNCHYCONE_AWS_REGION=us-west-2
+```
+
+See the documentation for complete environment variable lists.
+
+## 📁 Module Structure
+
+The library is organized into focused modules:
+
+```typescript
+// Core exports
+import { ... } from 'crunchycone-lib';
+
+// Email services
+import { createEmailService } from 'crunchycone-lib/email';
+
+// Email templates
+import { createEmailTemplateService } from 'crunchycone-lib/email/templates';
+
+// Storage services
+import { StorageService } from 'crunchycone-lib/storage';
+
+// Authentication utilities
+import { getCrunchyConeAPIKey } from 'crunchycone-lib/auth';
+
+// Next.js API helpers
+import { createApiHandler } from 'crunchycone-lib/api-external';
+```
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run with coverage
+npm run test:coverage
+
+# Lint code
+npm run lint
+
+# Fix lint issues
+npm run lint:fix
+```
+
+## 🔧 Development
+
+```bash
+# Build the library
+npm run build
+
+# Clean build artifacts
+npm run clean
+
+# Test email functionality
+npm run email-test
+
+# Test storage functionality
+npm run storage-test
+
+# Interactive storage CLI
+npm run storage-cli
+```
+
+## 📊 Provider Support Matrix
+
+### Email Providers
+
+| Provider | Status | Dependencies | Features |
+|----------|---------|-------------|----------|
+| Console | ✅ Built-in | None | Development/testing |
+| SMTP | ✅ Ready | nodemailer | Self-hosted |
+| SendGrid | ✅ Ready | @sendgrid/mail | Transactional |
+| Resend | ✅ Ready | resend | Modern API |
+| Amazon SES | ✅ Ready | @aws-sdk/client-ses | AWS ecosystem |
+| Mailgun | ✅ Ready | mailgun-js | Reliable delivery |
+| CrunchyCone | ✅ Ready | None | Integrated platform |
+
+### Storage Providers
+
+| Provider | Status | Dependencies | Features |
+|----------|---------|-------------|----------|
+| LocalStorage | ✅ Built-in | None | Development/testing |
+| CrunchyCone | ✅ Ready | None | Integrated platform |
+| AWS S3 | ✅ Ready | @aws-sdk/client-s3 | Industry standard |
+| Google Cloud | ✅ Ready | @google-cloud/storage | GCP ecosystem |
+| Azure Blob | ✅ Ready | @azure/storage-blob | Azure ecosystem |
+| R2 (Cloudflare) | ✅ Ready | S3-compatible | Edge storage |
+| DigitalOcean Spaces | ✅ Ready | S3-compatible | Simple cloud |
+| Backblaze B2 | ✅ Ready | S3-compatible | Cost-effective |
+| Wasabi | ✅ Ready | S3-compatible | Hot storage |
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and add tests
+4. Ensure tests pass: `npm test`
+5. Commit your changes: `git commit -m 'Add amazing feature'`
+6. Push to the branch: `git push origin feature/amazing-feature`
+7. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Related Projects
+
+- [CrunchyCone Platform](https://crunchycone.com) - The main CrunchyCone platform
+- [CrunchyCone Starter Projects](https://github.com/crunchycone) - Ready-to-use project templates
+
+## 💬 Support
+
+- 📧 Email: support@crunchycone.com
+- 📖 Documentation: [docs/](docs/)
+- 🐛 Issues: [GitHub Issues](https://github.com/crunchycone/crunchycone-lib/issues)
+
+---
+
+Built with ❤️ and lots of 🍨 by the CrunchyCone team
