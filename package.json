@@ -1,6 +1,6 @@
 {
   "name": "crunchycone-lib",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "TypeScript library providing abstractions for CrunchyCone Starter Projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -69,6 +69,11 @@
       "types": "./dist/services/email/providers/console.d.ts"
     },
     "./storage": {
+      "import": "./dist/services/storage/index.js",
+      "require": "./dist/services/storage/index.js",
+      "types": "./dist/services/storage/index.d.ts"
+    },
+    "./services/storage": {
       "import": "./dist/services/storage/index.js",
       "require": "./dist/services/storage/index.js",
       "types": "./dist/services/storage/index.d.ts"
