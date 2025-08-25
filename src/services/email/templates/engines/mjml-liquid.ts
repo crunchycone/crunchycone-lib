@@ -15,9 +15,18 @@ import {
  */
 async function loadMJML(): Promise<any> {
   try {
-    // Use eval to prevent bundlers from trying to resolve mjml at build time
-    const mjml = await eval('import("mjml")');
-    return mjml.default || mjml;
+    // In test environments or when NODE_ENV is test, use require instead of dynamic import
+    const isTestEnv = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+    
+    if (isTestEnv) {
+      // Use require in test environments
+      const mjml = require('mjml');
+      return mjml.default || mjml;
+    } else {
+      // Use eval to prevent bundlers from trying to resolve mjml at build time
+      const mjml = await eval('import("mjml")');
+      return mjml.default || mjml;
+    }
   } catch (_error) {
     throw new Error(
       'MJML is not available. Email template rendering with MJML requires the mjml package to be installed.\n\n' +

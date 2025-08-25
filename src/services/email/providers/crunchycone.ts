@@ -75,6 +75,11 @@ export class CrunchyConeEmailService implements EmailService {
   private configPromise: Promise<void>;
 
   constructor(config?: Partial<CrunchyConeEmailConfig>) {
+    // Validate API key is available before proceeding
+    if (!config?.apiKey && !process.env.CRUNCHYCONE_API_KEY) {
+      throw new Error('CrunchyCone API key is required. Set CRUNCHYCONE_API_KEY environment variable or pass apiKey in config.');
+    }
+    
     // Initialize config asynchronously
     this.configPromise = this.initializeConfig(config);
   }
@@ -89,7 +94,7 @@ export class CrunchyConeEmailService implements EmailService {
       apiKey = await getCrunchyConeAPIKeyWithFallback();
     }
 
-    const baseUrl = config?.baseUrl || getCrunchyConeAPIURL();
+    const baseUrl = config?.baseUrl || getCrunchyConeAPIURL() || 'https://api.crunchycone.com';
     const projectId = config?.projectId || getCrunchyConeProjectID();
 
     this.config = {
@@ -102,7 +107,7 @@ export class CrunchyConeEmailService implements EmailService {
     // Debug logging for configuration
     console.log('🔧 CrunchyCone Email Config:');
     console.log(`   API URL: ${this.config.baseUrl}`);
-    console.log(`   API Key: ${this.config.apiKey.substring(0, 10)}...`);
+    console.log(`   API Key: ${this.config.apiKey ? this.config.apiKey.substring(0, 10) + '...' : '(not set)'}`);
     if (this.config.projectId) {
       console.log(`   Project ID: ${this.config.projectId}`);
     } else {

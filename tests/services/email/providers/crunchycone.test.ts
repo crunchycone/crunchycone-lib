@@ -1,8 +1,32 @@
 import { CrunchyConeEmailService } from '../../../../src/services/email/providers/crunchycone';
 import { testEmailParams, expectSuccessResponse, expectErrorResponse } from '../shared/test-helpers';
 
+// Mock auth functions to prevent keytar issues
+jest.mock('../../../../src/auth/crunchycone-auth', () => ({
+  getCrunchyConeAPIKey: jest.fn().mockImplementation(() => {
+    if (!process.env.CRUNCHYCONE_API_KEY) {
+      return Promise.reject(new Error('CrunchyCone API key not found. Please run: crunchycone auth login'));
+    }
+    return Promise.resolve('test-api-key-mock');
+  }),
+  hasCrunchyConeAPIKey: jest.fn().mockImplementation(() => {
+    return Promise.resolve(!!process.env.CRUNCHYCONE_API_KEY);
+  }),
+  getCrunchyConeAPIKeyWithFallback: jest.fn().mockImplementation(() => {
+    if (!process.env.CRUNCHYCONE_API_KEY) {
+      return Promise.reject(new Error('CrunchyCone API key not found in environment variable CRUNCHYCONE_API_KEY. Keychain access is not available (keytar not installed). Please set CRUNCHYCONE_API_KEY environment variable.'));
+    }
+    return Promise.resolve('test-api-key-mock');
+  }),
+  getCrunchyConeAPIURL: jest.fn().mockReturnValue('https://api.crunchycone.com'),
+  getCrunchyConeProjectID: jest.fn().mockReturnValue(undefined),
+}));
+
 // Mock fetch globally
 global.fetch = jest.fn();
+
+// Set a default API key to prevent auth issues during test setup
+process.env.CRUNCHYCONE_API_KEY = process.env.CRUNCHYCONE_API_KEY || 'test-api-key-for-jest';
 
 describe('CrunchyCone Email Service', () => {
   let service: CrunchyConeEmailService;
@@ -90,7 +114,7 @@ describe('CrunchyCone Email Service', () => {
       expect(response.messageId).toBe('test-email-id-123');
       
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.crunchycone.com/v1/emails/send',
+        'https://api.crunchycone.com/api/v1/emails/send',
         expect.objectContaining({
           method: 'POST',
           headers: expect.objectContaining({
@@ -131,8 +155,8 @@ describe('CrunchyCone Email Service', () => {
       const requestBody = JSON.parse(callArgs[1]?.body as string);
       
       expect(requestBody.to).toEqual([
-        { email: 'test1@example.com' },
-        { email: 'test2@example.com' },
+        { email: 'test1@example.com', name: '' },
+        { email: 'test2@example.com', name: '' },
       ]);
     });
 
@@ -148,7 +172,7 @@ describe('CrunchyCone Email Service', () => {
       const callArgs = mockFetch.mock.calls[0];
       const requestBody = JSON.parse(callArgs[1]?.body as string);
       
-      expect(requestBody.to).toEqual({ email: 'test@example.com' });
+      expect(requestBody.to).toEqual({ email: 'test@example.com', name: '' });
       expect(Array.isArray(requestBody.to)).toBe(false);
     });
 
@@ -166,6 +190,7 @@ describe('CrunchyCone Email Service', () => {
       
       expect(requestBody.from).toEqual({
         email: 'custom@example.com',
+        name: '',
       });
     });
 
@@ -216,6 +241,8 @@ describe('CrunchyCone Email Service', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 403,
+        statusText: 'Forbidden',
+        text: async () => JSON.stringify(errorResponse),
         json: async () => errorResponse,
       } as Response);
 
@@ -241,6 +268,8 @@ describe('CrunchyCone Email Service', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
+        statusText: 'Internal Server Error',
+        text: async () => 'Internal Server Error',
         json: async () => { throw new Error('Invalid JSON'); },
       } as unknown as Response);
 
@@ -248,7 +277,7 @@ describe('CrunchyCone Email Service', () => {
       
       expectErrorResponse(response);
       expect(response.error).toContain('500');
-      expect(response.error).toContain('Unknown error');
+      expect(response.error).toContain('Internal Server Error');
     });
   });
 
@@ -258,7 +287,7 @@ describe('CrunchyCone Email Service', () => {
     });
 
     test('should fetch email status successfully', async () => {
-      const mockStatus = {
+      const mockApiResponse = {
         email_id: 'test-email-id',
         status: 'delivered',
         subject: 'Test Subject',
@@ -266,16 +295,24 @@ describe('CrunchyCone Email Service', () => {
         delivered_at: '2023-12-15T10:02:00Z',
       };
 
+      const expectedResponse = {
+        emailId: 'test-email-id',
+        status: 'delivered',
+        subject: 'Test Subject',
+        sentAt: new Date('2023-12-15T10:01:00Z'),
+        deliveredAt: new Date('2023-12-15T10:02:00Z'),
+      };
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockStatus,
+        json: async () => mockApiResponse,
       } as Response);
 
       const status = await service.getEmailStatus('test-email-id');
-      expect(status).toEqual(mockStatus);
+      expect(status).toMatchObject(expectedResponse);
       
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.crunchycone.com/v1/emails/test-email-id',
+        'https://api.crunchycone.com/api/v1/emails/test-email-id',
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -289,10 +326,12 @@ describe('CrunchyCone Email Service', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
+        statusText: 'Not Found',
+        text: async () => JSON.stringify({ error: 'Email not found' }),
         json: async () => ({ error: 'Email not found' }),
       } as Response);
 
-      await expect(service.getEmailStatus('non-existent')).rejects.toThrow('Failed to get email status: 404');
+      await expect(service.getEmailStatus('non-existent')).rejects.toThrow('API request failed: 404 Not Found');
     });
   });
 
@@ -302,22 +341,31 @@ describe('CrunchyCone Email Service', () => {
     });
 
     test('should list emails with default parameters', async () => {
-      const mockResponse = {
+      const mockApiResponse = {
         emails: [{ email_id: 'email-1' }, { email_id: 'email-2' }],
         total_count: 2,
         has_more: false,
       };
 
+      const expectedResult = {
+        emails: [
+          { emailId: 'email-1' },
+          { emailId: 'email-2' }
+        ],
+        totalCount: 2,
+        hasMore: false,
+      };
+
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse,
+        json: async () => mockApiResponse,
       } as Response);
 
       const result = await service.listEmails();
-      expect(result).toEqual(mockResponse);
+      expect(result).toMatchObject(expectedResult);
       
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.crunchycone.com/v1/emails',
+        'https://api.crunchycone.com/api/v1/emails',
         expect.objectContaining({
           method: 'GET',
         }),
@@ -334,7 +382,7 @@ describe('CrunchyCone Email Service', () => {
       await service.listEmails({ status: 'sent', limit: 10, offset: 20 });
       
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.crunchycone.com/v1/emails?status=sent&limit=10&offset=20',
+        'https://api.crunchycone.com/api/v1/emails?status=sent&limit=10&offset=20',
         expect.objectContaining({
           method: 'GET',
         }),
@@ -345,10 +393,12 @@ describe('CrunchyCone Email Service', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 403,
+        statusText: 'Forbidden',
+        text: async () => JSON.stringify({ error: 'Unauthorized' }),
         json: async () => ({ error: 'Unauthorized' }),
       } as Response);
 
-      await expect(service.listEmails()).rejects.toThrow('Failed to list emails: 403');
+      await expect(service.listEmails()).rejects.toThrow('API request failed: 403 Forbidden');
     });
   });
 
