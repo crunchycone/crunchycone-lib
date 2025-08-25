@@ -1,4 +1,5 @@
 import { createEmailService } from '../../../src/services/email/factory';
+import { AmazonSESEmailService } from '../../../src/services/email/providers/amazon-ses';
 import { testEmailParams, setEnvVars, expectErrorResponse } from './shared/test-helpers';
 
 // Mock all external dependencies
@@ -102,14 +103,13 @@ describe('Email Service Error Handling', () => {
 
     test('should handle Amazon SES invalid credentials', async () => {
       setEnvVars('ses');
-      process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'ses';
       
       const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
       const mockSend = jest.fn().mockRejectedValue(new Error('The security token included in the request is invalid'));
       SESClient.mockImplementation(() => ({ send: mockSend }));
       SendEmailCommand.mockImplementation((params: any) => params);
       
-      const service = createEmailService();
+      const service = new AmazonSESEmailService();
       const response = await service.sendEmail(testEmailParams.basic);
       
       expectErrorResponse(response);
@@ -118,7 +118,6 @@ describe('Email Service Error Handling', () => {
 
     test('should handle AWS SDK initialization errors', async () => {
       setEnvVars('ses');
-      process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'ses';
       
       // Mock SESClient to have a broken constructor
       const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
@@ -127,7 +126,7 @@ describe('Email Service Error Handling', () => {
       });
       SendEmailCommand.mockImplementation((params: any) => params);
       
-      const service = createEmailService();
+      const service = new AmazonSESEmailService();
       const response = await service.sendEmail(testEmailParams.basic);
       
       expectErrorResponse(response);
@@ -225,14 +224,13 @@ describe('Email Service Error Handling', () => {
 
     test('should handle Amazon SES throttling', async () => {
       setEnvVars('ses');
-      process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'ses';
       
       const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
       const mockSend = jest.fn().mockRejectedValue(new Error('Throttling: Rate exceeded'));
       SESClient.mockImplementation(() => ({ send: mockSend }));
       SendEmailCommand.mockImplementation((params: any) => params);
       
-      const service = createEmailService();
+      const service = new AmazonSESEmailService();
       const response = await service.sendEmail(testEmailParams.basic);
       
       expectErrorResponse(response);
@@ -283,14 +281,13 @@ describe('Email Service Error Handling', () => {
   describe('Service-Specific Errors', () => {
     test('should handle Amazon SES quota exceeded', async () => {
       setEnvVars('ses');
-      process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'ses';
       
       const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
       const mockSend = jest.fn().mockRejectedValue(new Error('Daily sending quota exceeded'));
       SESClient.mockImplementation(() => ({ send: mockSend }));
       SendEmailCommand.mockImplementation((params: any) => params);
       
-      const service = createEmailService();
+      const service = new AmazonSESEmailService();
       const response = await service.sendEmail(testEmailParams.basic);
       
       expectErrorResponse(response);
@@ -370,7 +367,7 @@ describe('Email Service Error Handling', () => {
   });
 
   describe('Consistent Error Response Format', () => {
-    const providers = ['smtp', 'sendgrid', 'resend', 'ses', 'mailgun'];
+    const providers = ['smtp', 'sendgrid', 'resend', 'mailgun'];
 
     test.each(providers)('should return consistent error format for %s provider', async (provider) => {
       if (provider !== 'crunchycone') {
@@ -402,13 +399,6 @@ describe('Email Service Error Handling', () => {
           }));
           break;
         }
-        case 'ses': {
-          const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
-          const mockSend = jest.fn().mockRejectedValue(new Error('Test error'));
-          SESClient.mockImplementation(() => ({ send: mockSend }));
-          SendEmailCommand.mockImplementation((params: any) => params);
-          break;
-        }
         case 'mailgun': {
           mockFetch.mockRejectedValue(new Error('Test error'));
           break;
@@ -416,6 +406,22 @@ describe('Email Service Error Handling', () => {
       }
       
       const service = createEmailService();
+      const response = await service.sendEmail(testEmailParams.basic);
+      
+      expect(response).toHaveProperty('success', false);
+      expect(response).toHaveProperty('error', 'Test error');
+      expect(response).not.toHaveProperty('messageId');
+    });
+
+    test('should return consistent error format for ses provider (direct import)', async () => {
+      setEnvVars('ses');
+      
+      const { SESClient, SendEmailCommand } = require('@aws-sdk/client-ses');
+      const mockSend = jest.fn().mockRejectedValue(new Error('Test error'));
+      SESClient.mockImplementation(() => ({ send: mockSend }));
+      SendEmailCommand.mockImplementation((params: any) => params);
+      
+      const service = new AmazonSESEmailService();
       const response = await service.sendEmail(testEmailParams.basic);
       
       expect(response).toHaveProperty('success', false);
