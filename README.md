@@ -56,7 +56,7 @@ npm install --save-dev @types/mjml @types/html-to-text
 ### Email Service
 
 ```typescript
-import { createEmailService } from 'crunchycone-lib/email';
+import { createEmailService } from 'crunchycone-lib';
 
 // Create email service (uses environment variables for configuration)
 const emailService = createEmailService('sendgrid');
@@ -65,11 +65,23 @@ const emailService = createEmailService('sendgrid');
 const result = await emailService.sendEmail({
   to: 'user@example.com',
   subject: 'Hello World',
-  text: 'Hello from CrunchyCone!',
-  html: '<h1>Hello from CrunchyCone!</h1>'
+  textBody: 'Hello from CrunchyCone!',
+  htmlBody: '<h1>Hello from CrunchyCone!</h1>'
 });
 
 console.log(`Email sent with ID: ${result.messageId}`);
+```
+
+### Specific Provider Import (No Optional Dependencies)
+
+```typescript
+// Import specific providers to avoid loading optional dependencies
+import { AmazonSESEmailService } from 'crunchycone-lib/email/providers/amazon-ses';
+import { S3CompatibleProvider } from 'crunchycone-lib/storage/providers/s3';
+
+// Only loads when the provider is actually used
+const emailService = new AmazonSESEmailService();
+const storageProvider = new S3CompatibleProvider(config);
 ```
 
 ### Storage Service
@@ -163,26 +175,45 @@ See the documentation for complete environment variable lists.
 
 ## 📁 Module Structure
 
-The library is organized into focused modules:
+The library is organized into focused modules with **zero optional dependencies** at the main entry point:
 
 ```typescript
-// Core exports
-import { ... } from 'crunchycone-lib';
+// Core exports (no optional dependencies)
+import { createEmailService, EmailService } from 'crunchycone-lib';
 
-// Email services
+// Email services (no optional dependencies)
 import { createEmailService } from 'crunchycone-lib/email';
 
-// Email templates
+// Email templates (no optional dependencies)
 import { createEmailTemplateService } from 'crunchycone-lib/email/templates';
 
-// Storage services
+// Storage services (loads core without providers)
 import { StorageService } from 'crunchycone-lib/storage';
 
-// Authentication utilities
+// Authentication utilities (no optional dependencies)
 import { getCrunchyConeAPIKey } from 'crunchycone-lib/auth';
+
+// Specific providers (only loads when imported)
+import { AmazonSESEmailService } from 'crunchycone-lib/email/providers/amazon-ses';
+import { SendGridEmailService } from 'crunchycone-lib/email/providers/sendgrid';
+import { S3CompatibleProvider } from 'crunchycone-lib/storage/providers/s3';
+import { GCPStorageProvider } from 'crunchycone-lib/storage/providers/gcp';
+import { AzureStorageProvider } from 'crunchycone-lib/storage/providers/azure';
 
 // Next.js API helpers
 import { createApiHandler } from 'crunchycone-lib/api-external';
+```
+
+### 🎯 **Zero Optional Dependencies at Import**
+
+The main entry point (`crunchycone-lib`) and core modules can be imported **without installing any optional cloud provider SDKs**. Optional dependencies are only required when you import and use specific providers.
+
+**Example: Email-only usage** (no storage or cloud dependencies needed):
+```typescript
+import { createEmailService } from 'crunchycone-lib';
+
+// Only requires core dependencies - works without AWS, Azure, or GCP SDKs!
+const emailService = createEmailService('console');
 ```
 
 ## 🧪 Testing

@@ -1,6 +1,6 @@
 {
   "name": "crunchycone-lib",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "TypeScript library providing abstractions for CrunchyCone Starter Projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -28,10 +28,70 @@
       "require": "./dist/services/email/templates/index.js",
       "types": "./dist/services/email/templates/index.d.ts"
     },
+    "./email/providers/amazon-ses": {
+      "import": "./dist/services/email/providers/amazon-ses.js",
+      "require": "./dist/services/email/providers/amazon-ses.js",
+      "types": "./dist/services/email/providers/amazon-ses.d.ts"
+    },
+    "./email/providers/sendgrid": {
+      "import": "./dist/services/email/providers/sendgrid.js",
+      "require": "./dist/services/email/providers/sendgrid.js",
+      "types": "./dist/services/email/providers/sendgrid.d.ts"
+    },
+    "./email/providers/resend": {
+      "import": "./dist/services/email/providers/resend.js",
+      "require": "./dist/services/email/providers/resend.js",
+      "types": "./dist/services/email/providers/resend.d.ts"
+    },
+    "./email/providers/smtp": {
+      "import": "./dist/services/email/providers/smtp.js",
+      "require": "./dist/services/email/providers/smtp.js",
+      "types": "./dist/services/email/providers/smtp.d.ts"
+    },
+    "./email/providers/mailgun": {
+      "import": "./dist/services/email/providers/mailgun.js",
+      "require": "./dist/services/email/providers/mailgun.js",
+      "types": "./dist/services/email/providers/mailgun.d.ts"
+    },
+    "./email/providers/crunchycone": {
+      "import": "./dist/services/email/providers/crunchycone.js",
+      "require": "./dist/services/email/providers/crunchycone.js",
+      "types": "./dist/services/email/providers/crunchycone.d.ts"
+    },
+    "./email/providers/console": {
+      "import": "./dist/services/email/providers/console.js",
+      "require": "./dist/services/email/providers/console.js",
+      "types": "./dist/services/email/providers/console.d.ts"
+    },
     "./storage": {
       "import": "./dist/services/storage/index.js",
       "require": "./dist/services/storage/index.js",
       "types": "./dist/services/storage/index.d.ts"
+    },
+    "./storage/providers/s3": {
+      "import": "./dist/services/storage/providers/s3-compatible.js",
+      "require": "./dist/services/storage/providers/s3-compatible.js",
+      "types": "./dist/services/storage/providers/s3-compatible.d.ts"
+    },
+    "./storage/providers/azure": {
+      "import": "./dist/services/storage/providers/azure-storage.js",
+      "require": "./dist/services/storage/providers/azure-storage.js",
+      "types": "./dist/services/storage/providers/azure-storage.d.ts"
+    },
+    "./storage/providers/gcp": {
+      "import": "./dist/services/storage/providers/gcp-storage.js",
+      "require": "./dist/services/storage/providers/gcp-storage.js",
+      "types": "./dist/services/storage/providers/gcp-storage.d.ts"
+    },
+    "./storage/providers/local": {
+      "import": "./dist/services/storage/providers/localstorage.js",
+      "require": "./dist/services/storage/providers/localstorage.js",
+      "types": "./dist/services/storage/providers/localstorage.d.ts"
+    },
+    "./storage/providers/crunchycone": {
+      "import": "./dist/services/storage/providers/crunchycone.js",
+      "require": "./dist/services/storage/providers/crunchycone.js",
+      "types": "./dist/services/storage/providers/crunchycone.d.ts"
     },
     "./api-external": {
       "import": "./dist/api-external/index.js",

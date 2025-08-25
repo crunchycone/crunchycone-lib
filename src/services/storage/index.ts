@@ -13,17 +13,12 @@ export * from './validation';
 // Helper utilities
 export * from './utils';
 
-// Providers
-export { LocalStorageProvider } from './providers/localstorage';
-export { S3CompatibleProvider } from './providers/s3-compatible';
-export { AWSS3Provider } from './providers/aws-s3';
-export { DigitalOceanSpacesProvider } from './providers/digitalocean';
-export { WasabiProvider } from './providers/wasabi';
-export { BackblazeB2Provider } from './providers/backblaze';
-export { CloudflareR2Provider } from './providers/r2';
-export { GCPStorageProvider } from './providers/gcp-storage';
-export { AzureStorageProvider } from './providers/azure-storage';
-export { CrunchyConeProvider } from './providers/crunchycone';
+// Note: Individual storage providers are available via specific imports to avoid loading optional dependencies:
+// - import { LocalStorageProvider } from 'crunchycone-lib/storage/providers/local'
+// - import { S3CompatibleProvider } from 'crunchycone-lib/storage/providers/s3'
+// - import { GCPStorageProvider } from 'crunchycone-lib/storage/providers/gcp'
+// - import { AzureStorageProvider } from 'crunchycone-lib/storage/providers/azure'
+// - import { CrunchyConeProvider } from 'crunchycone-lib/storage/providers/crunchycone'
 
 // Provider configuration types
 export type { AWSS3Config } from './providers/aws-s3';
