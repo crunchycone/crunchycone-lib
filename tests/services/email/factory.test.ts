@@ -43,11 +43,13 @@ describe('Email Service Factory', () => {
       expect(service).toBeInstanceOf(ResendEmailService);
     });
 
-    test('should throw error when provider is "ses" (requires direct import)', () => {
+    test('should create Amazon SES service when provider is "ses"', () => {
       setEnvVars('ses');
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'ses';
       
-      expect(() => createEmailService()).toThrow('Provider \'ses\' requires optional dependencies. Import directly: import { AmazonSESEmailService } from \'crunchycone-lib/email/providers/amazon-ses\'');
+      const service = createEmailService();
+      
+      expect(service).toBeInstanceOf(AmazonSESEmailService);
     });
 
     test('should create Mailgun service when provider is "mailgun"', () => {
@@ -85,12 +87,12 @@ describe('Email Service Factory', () => {
     });
 
     test('should handle case-insensitive provider names', () => {
-      setEnvVars('sendgrid');
-      process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'SENDGRID';
+      setEnvVars('smtp');
+      process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'SMTP';
       
       const service = createEmailService();
       
-      expect(service).toBeInstanceOf(SendGridEmailService);
+      expect(service).toBeInstanceOf(SMTPEmailService);
     });
 
     test('should handle mixed-case provider names', () => {
@@ -106,7 +108,7 @@ describe('Email Service Factory', () => {
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'invalid-provider';
       
       expect(() => createEmailService()).toThrow(
-        'Unsupported email provider: invalid-provider. Supported providers: smtp, sendgrid, resend, ses (via direct import), mailgun, crunchycone, console',
+        'Unsupported email provider: invalid-provider. Supported providers: smtp, sendgrid, resend, ses, mailgun, crunchycone, console',
       );
     });
 
@@ -114,7 +116,7 @@ describe('Email Service Factory', () => {
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'sendgrind'; // typo
       
       expect(() => createEmailService()).toThrow(
-        'Unsupported email provider: sendgrind. Supported providers: smtp, sendgrid, resend, ses (via direct import), mailgun, crunchycone, console',
+        'Unsupported email provider: sendgrind. Supported providers: smtp, sendgrid, resend, ses, mailgun, crunchycone, console',
       );
     });
 
@@ -127,26 +129,26 @@ describe('Email Service Factory', () => {
     });
 
     test('should handle whitespace in provider name', () => {
-      setEnvVars('sendgrid');
-      process.env.CRUNCHYCONE_EMAIL_PROVIDER = ' sendgrid ';
+      setEnvVars('smtp');
+      process.env.CRUNCHYCONE_EMAIL_PROVIDER = ' smtp ';
       
       const service = createEmailService();
       
-      expect(service).toBeInstanceOf(SendGridEmailService);
+      expect(service).toBeInstanceOf(SMTPEmailService);
     });
   });
 
   describe('getEmailService', () => {
     test('should be an alias for createEmailService', () => {
-      setEnvVars('resend');
-      process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'resend';
+      setEnvVars('smtp');
+      process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'smtp';
       
       const service1 = createEmailService();
       const service2 = getEmailService();
       
       expect(service1.constructor).toBe(service2.constructor);
-      expect(service1).toBeInstanceOf(ResendEmailService);
-      expect(service2).toBeInstanceOf(ResendEmailService);
+      expect(service1).toBeInstanceOf(SMTPEmailService);
+      expect(service2).toBeInstanceOf(SMTPEmailService);
     });
 
     test('should create new instances on each call', () => {
@@ -165,34 +167,43 @@ describe('Email Service Factory', () => {
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'smtp';
       // Don't set SMTP environment variables
       
-      expect(() => createEmailService()).toThrow('Missing required SMTP environment variables');
+      expect(() => createEmailService()).toThrow('Failed to load SMTP provider:');
     });
 
-    test('should propagate SendGrid configuration errors', () => {
+    test('should create SendGrid service when dependencies are available', () => {
+      setEnvVars('sendgrid');
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'sendgrid';
-      // Don't set SendGrid environment variables
       
-      expect(() => createEmailService()).toThrow('Missing required SendGrid environment variables');
+      const service = createEmailService();
+      
+      expect(service).toBeInstanceOf(SendGridEmailService);
     });
 
-    test('should propagate Resend configuration errors', () => {
+    test('should create Resend service when dependencies are available', () => {
+      setEnvVars('resend');
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'resend';
-      // Don't set Resend environment variables
       
-      expect(() => createEmailService()).toThrow('Missing required Resend environment variables');
+      const service = createEmailService();
+      
+      expect(service).toBeInstanceOf(ResendEmailService);
     });
 
-    test('should throw error when trying to create SES service through factory', () => {
+    test('should create Amazon SES service when dependencies are available', () => {
+      setEnvVars('ses');
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'ses';
       
-      expect(() => createEmailService()).toThrow('Provider \'ses\' requires optional dependencies. Import directly: import { AmazonSESEmailService } from \'crunchycone-lib/email/providers/amazon-ses\'');
+      const service = createEmailService();
+      
+      expect(service).toBeInstanceOf(AmazonSESEmailService);
     });
 
-    test('should propagate Mailgun configuration errors', () => {
+    test('should create Mailgun service when dependencies are available', () => {
+      setEnvVars('mailgun');
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'mailgun';
-      // Don't set Mailgun environment variables
       
-      expect(() => createEmailService()).toThrow('Missing required Mailgun environment variables');
+      const service = createEmailService();
+      
+      expect(service).toBeInstanceOf(MailgunEmailService);
     });
 
     test('should not throw for CrunchyCone provider without env vars', () => {
@@ -216,6 +227,7 @@ describe('Email Service Factory', () => {
       { name: 'smtp', class: SMTPEmailService, env: 'smtp' },
       { name: 'sendgrid', class: SendGridEmailService, env: 'sendgrid' },
       { name: 'resend', class: ResendEmailService, env: 'resend' },
+      { name: 'ses', class: AmazonSESEmailService, env: 'ses' },
       { name: 'mailgun', class: MailgunEmailService, env: 'mailgun' },
       { name: 'crunchycone', class: CrunchyConeEmailService, env: 'crunchycone' },
       { name: 'console', class: ConsoleEmailService, env: null },

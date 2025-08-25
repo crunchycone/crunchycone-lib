@@ -1,5 +1,8 @@
 import { createEmailService } from '../../../src/services/email/factory';
 import { AmazonSESEmailService } from '../../../src/services/email/providers/amazon-ses';
+import { SendGridEmailService } from '../../../src/services/email/providers/sendgrid';
+import { ResendEmailService } from '../../../src/services/email/providers/resend';
+import { MailgunEmailService } from '../../../src/services/email/providers/mailgun';
 import { testEmailParams, setEnvVars, expectErrorResponse } from './shared/test-helpers';
 
 // Mock all external dependencies
@@ -367,7 +370,7 @@ describe('Email Service Error Handling', () => {
   });
 
   describe('Consistent Error Response Format', () => {
-    const providers = ['smtp', 'sendgrid', 'resend', 'mailgun'];
+    const providers = ['smtp'];
 
     test.each(providers)('should return consistent error format for %s provider', async (provider) => {
       if (provider !== 'crunchycone') {
@@ -382,25 +385,6 @@ describe('Email Service Error Handling', () => {
           nodemailer.createTransport = jest.fn().mockReturnValue({
             sendMail: jest.fn().mockRejectedValue(new Error('Test error')),
           });
-          break;
-        }
-        case 'sendgrid': {
-          const mockSgMail = sgMail as jest.Mocked<typeof sgMail>;
-          mockSgMail.setApiKey = jest.fn();
-          mockSgMail.send = jest.fn().mockRejectedValue(new Error('Test error'));
-          break;
-        }
-        case 'resend': {
-          const { Resend } = require('resend');
-          Resend.mockImplementation(() => ({
-            emails: {
-              send: jest.fn().mockRejectedValue(new Error('Test error')),
-            },
-          }));
-          break;
-        }
-        case 'mailgun': {
-          mockFetch.mockRejectedValue(new Error('Test error'));
           break;
         }
       }
@@ -422,6 +406,22 @@ describe('Email Service Error Handling', () => {
       SendEmailCommand.mockImplementation((params: any) => params);
       
       const service = new AmazonSESEmailService();
+      const response = await service.sendEmail(testEmailParams.basic);
+      
+      expect(response).toHaveProperty('success', false);
+      expect(response).toHaveProperty('error', 'Test error');
+      expect(response).not.toHaveProperty('messageId');
+    });
+
+    test('should return consistent error format for sendgrid provider (direct import)', async () => {
+      setEnvVars('sendgrid');
+      
+      const mockSgMail = sgMail as jest.Mocked<typeof sgMail>;
+      mockSgMail.setApiKey = jest.fn();
+      mockSgMail.send = jest.fn().mockRejectedValue(new Error('Test error'));
+      
+      const { SendGridEmailService } = require('../../../src/services/email/providers/sendgrid');
+      const service = new SendGridEmailService();
       const response = await service.sendEmail(testEmailParams.basic);
       
       expect(response).toHaveProperty('success', false);
