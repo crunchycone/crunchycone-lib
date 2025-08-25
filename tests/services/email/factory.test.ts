@@ -184,11 +184,19 @@ describe('Email Service Factory', () => {
       expect(() => createEmailService()).toThrow('Missing required Resend environment variables');
     });
 
-    test('should propagate Amazon SES configuration errors', () => {
+    test('should propagate Amazon SES configuration errors', async () => {
       process.env.CRUNCHYCONE_EMAIL_PROVIDER = 'ses';
       // Don't set SES environment variables
       
-      expect(() => createEmailService()).toThrow('Missing required Amazon SES environment variables');
+      const service = createEmailService(); // Factory should not throw
+      const response = await service.sendEmail({
+        to: 'test@example.com',
+        subject: 'Test',
+        textBody: 'Test'
+      });
+      
+      expect(response.success).toBe(false);
+      expect(response.error).toContain('Missing required Amazon SES environment variables');
     });
 
     test('should propagate Mailgun configuration errors', () => {

@@ -26,22 +26,46 @@ describe('Amazon SES Email Service', () => {
       expect(() => new AmazonSESEmailService()).not.toThrow();
     });
 
-    test('should throw error when AWS access key is missing', () => {
+    test('should return error when AWS access key is missing', async () => {
       delete process.env.CRUNCHYCONE_AWS_ACCESS_KEY_ID;
       
-      expect(() => new AmazonSESEmailService()).toThrow('Missing required Amazon SES environment variables');
+      const service = new AmazonSESEmailService(); // Constructor should not throw
+      const response = await service.sendEmail({
+        to: 'test@example.com',
+        subject: 'Test',
+        textBody: 'Test'
+      });
+      
+      expect(response.success).toBe(false);
+      expect(response.error).toContain('Missing required Amazon SES environment variables');
     });
 
-    test('should throw error when AWS secret key is missing', () => {
+    test('should return error when AWS secret key is missing', async () => {
       delete process.env.CRUNCHYCONE_AWS_SECRET_ACCESS_KEY;
       
-      expect(() => new AmazonSESEmailService()).toThrow('Missing required Amazon SES environment variables');
+      const service = new AmazonSESEmailService(); // Constructor should not throw
+      const response = await service.sendEmail({
+        to: 'test@example.com',
+        subject: 'Test',
+        textBody: 'Test'
+      });
+      
+      expect(response.success).toBe(false);
+      expect(response.error).toContain('Missing required Amazon SES environment variables');
     });
 
-    test('should throw error when from address is missing', () => {
+    test('should return error when from address is missing', async () => {
       delete process.env.CRUNCHYCONE_SES_FROM;
       
-      expect(() => new AmazonSESEmailService()).toThrow('Missing required Amazon SES environment variables');
+      const service = new AmazonSESEmailService(); // Constructor should not throw
+      const response = await service.sendEmail({
+        to: 'test@example.com',
+        subject: 'Test',
+        textBody: 'Test'
+      });
+      
+      expect(response.success).toBe(false);
+      expect(response.error).toContain('Missing required Amazon SES environment variables');
     });
 
     test('should use default region when not specified', () => {

@@ -16,14 +16,23 @@ export class AmazonSESEmailService implements EmailService {
     this.from = process.env.CRUNCHYCONE_SES_FROM || '';
     this.fromDisplayName = process.env.CRUNCHYCONE_EMAIL_FROM_DISPLAY;
 
-    if (!this.accessKeyId || !this.secretAccessKey || !this.from) {
-      throw new Error('Missing required Amazon SES environment variables');
-    }
+    // Configuration validation will happen when the service is actually used
   }
 
   private async initializeSESClient() {
     if (this.sesClient) {
       return this.sesClient;
+    }
+
+    // Validate configuration when actually trying to use the service
+    if (!this.accessKeyId || !this.secretAccessKey || !this.from) {
+      throw new Error(
+        'Missing required Amazon SES environment variables:\n' +
+        '- CRUNCHYCONE_AWS_ACCESS_KEY_ID: Your AWS access key ID\n' +
+        '- CRUNCHYCONE_AWS_SECRET_ACCESS_KEY: Your AWS secret access key\n' +
+        '- CRUNCHYCONE_SES_FROM: The sender email address\n' +
+        '- CRUNCHYCONE_AWS_REGION: AWS region (optional, defaults to us-east-1)'
+      );
     }
 
     try {

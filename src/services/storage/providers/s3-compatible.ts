@@ -1,28 +1,69 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand, ListObjectsV2Command, ObjectCannedACL, ServerSideEncryption } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+// Dynamic imports for optional AWS SDK dependencies
 import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo, S3Config, ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus } from '../types';
 import { createReadStream } from 'fs';
 import { Readable } from 'stream';
 
 export class S3CompatibleProvider implements StorageProvider {
-  private client: S3Client;
+  private client: any; // S3Client - will be initialized lazily
   private config: S3Config;
+  private awsSDK: any; // Will hold dynamically imported AWS SDK modules
 
   constructor(config: S3Config) {
     this.config = config;
-    
-    this.client = new S3Client({
-      region: config.region,
-      endpoint: config.endpoint,
-      forcePathStyle: config.forcePathStyle ?? true,
-      credentials: {
-        accessKeyId: config.accessKeyId,
-        secretAccessKey: config.secretAccessKey,
-      },
-    });
+  }
+
+  private async initializeClient() {
+    if (this.client) {
+      return { client: this.client, sdk: this.awsSDK };
+    }
+
+    try {
+      // Dynamic imports for AWS SDK
+      const [s3Module, presignerModule] = await Promise.all([
+        import('@aws-sdk/client-s3'),
+        import('@aws-sdk/s3-request-presigner')
+      ]);
+
+      this.awsSDK = {
+        S3Client: s3Module.S3Client,
+        PutObjectCommand: s3Module.PutObjectCommand,
+        DeleteObjectCommand: s3Module.DeleteObjectCommand,
+        HeadObjectCommand: s3Module.HeadObjectCommand,
+        GetObjectCommand: s3Module.GetObjectCommand,
+        ListObjectsV2Command: s3Module.ListObjectsV2Command,
+        PutObjectAclCommand: s3Module.PutObjectAclCommand,
+        GetObjectAclCommand: s3Module.GetObjectAclCommand,
+        getSignedUrl: presignerModule.getSignedUrl,
+        ObjectCannedACL: s3Module.ObjectCannedACL,
+        ServerSideEncryption: s3Module.ServerSideEncryption,
+      };
+      
+      this.client = new this.awsSDK.S3Client({
+        region: this.config.region,
+        endpoint: this.config.endpoint,
+        forcePathStyle: this.config.forcePathStyle ?? true,
+        credentials: {
+          accessKeyId: this.config.accessKeyId,
+          secretAccessKey: this.config.secretAccessKey,
+        },
+      });
+
+      return { client: this.client, sdk: this.awsSDK };
+    } catch (error) {
+      if ((error as any).code === 'MODULE_NOT_FOUND') {
+        throw new Error(
+          'AWS SDK not found. Please install it with:\n' +
+          'npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner\n' +
+          'or\n' +
+          'yarn add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner'
+        );
+      }
+      throw error;
+    }
   }
 
   async uploadFile(options: StorageUploadOptions): Promise<StorageUploadResult> {
+    const { client, sdk } = await this.initializeClient();
     const bucket = options.bucket ?? this.config.bucket;
     
     // Validate input - exactly one source should be provided
@@ -68,19 +109,19 @@ export class S3CompatibleProvider implements StorageProvider {
       external_id: options.external_id,
     };
 
-    const command = new PutObjectCommand({
+    const command = new sdk.PutObjectCommand({
       Bucket: bucket,
       Key: key,
       Body: body,
       ContentType: contentType,
       ContentLength: contentLength,
-      ACL: this.config.defaultACL as ObjectCannedACL,
-      ServerSideEncryption: this.config.serverSideEncryption as ServerSideEncryption,
+      ACL: this.config.defaultACL as any,
+      ServerSideEncryption: this.config.serverSideEncryption as any,
       Metadata: metadata,
     });
 
     try {
-      const result = await this.client.send(command);
+      const result = await client.send(command);
       
       // Generate public URL
       const url = await this.generatePublicUrl(key, options.public);
@@ -102,39 +143,42 @@ export class S3CompatibleProvider implements StorageProvider {
   }
 
   async deleteFile(key: string): Promise<void> {
-    const command = new DeleteObjectCommand({
+    const { client, sdk } = await this.initializeClient();
+    const command = new sdk.DeleteObjectCommand({
       Bucket: this.config.bucket,
       Key: key,
     });
 
     try {
-      await this.client.send(command);
+      await client.send(command);
     } catch (error) {
       throw new Error(`Failed to delete file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   async getFileUrl(key: string, expiresIn: number = 3600): Promise<string> {
-    const command = new GetObjectCommand({
+    const { client, sdk } = await this.initializeClient();
+    const command = new sdk.GetObjectCommand({
       Bucket: this.config.bucket,
       Key: key,
     });
 
     try {
-      return await getSignedUrl(this.client, command, { expiresIn });
+      return await sdk.getSignedUrl(client, command, { expiresIn });
     } catch (error) {
       throw new Error(`Failed to generate file URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   async fileExists(key: string): Promise<boolean> {
-    const command = new HeadObjectCommand({
+    const { client, sdk } = await this.initializeClient();
+    const command = new sdk.HeadObjectCommand({
       Bucket: this.config.bucket,
       Key: key,
     });
 
     try {
-      await this.client.send(command);
+      await client.send(command);
       return true;
     } catch (error: any) {
       if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
@@ -166,17 +210,18 @@ export class S3CompatibleProvider implements StorageProvider {
   }
 
   async findFileByExternalId(externalId: string): Promise<StorageFileInfo | null> {
+    const { client, sdk } = await this.initializeClient();
     try {
       // List all objects in the bucket and check their metadata
       let continuationToken: string | undefined;
       
       do {
-        const listCommand = new ListObjectsV2Command({
+        const listCommand = new sdk.ListObjectsV2Command({
           Bucket: this.config.bucket,
           ContinuationToken: continuationToken,
         });
 
-        const listResult = await this.client.send(listCommand);
+        const listResult = await client.send(listCommand);
         
         if (listResult.Contents) {
           for (const object of listResult.Contents) {
@@ -184,12 +229,12 @@ export class S3CompatibleProvider implements StorageProvider {
             
             try {
               // Get metadata for each object
-              const headCommand = new HeadObjectCommand({
+              const headCommand = new sdk.HeadObjectCommand({
                 Bucket: this.config.bucket,
                 Key: object.Key,
               });
               
-              const headResult = await this.client.send(headCommand);
+              const headResult = await client.send(headCommand);
               
               // Check if this object has the matching external_id in metadata
               // Note: Some S3-compatible services convert underscores to hyphens in metadata keys
@@ -300,6 +345,7 @@ export class S3CompatibleProvider implements StorageProvider {
 
   // File visibility management
   async setFileVisibility(key: string, visibility: 'public' | 'private'): Promise<FileVisibilityResult> {
+    const { client, sdk } = await this.initializeClient();
     try {
       // Check if file exists first
       const exists = await this.fileExists(key);
@@ -312,18 +358,15 @@ export class S3CompatibleProvider implements StorageProvider {
         };
       }
 
-      // Import ACL commands dynamically
-      const { PutObjectAclCommand } = await import('@aws-sdk/client-s3');
-      
       const acl = visibility === 'public' ? 'public-read' : 'private';
       
-      const command = new PutObjectAclCommand({
+      const command = new sdk.PutObjectAclCommand({
         Bucket: this.config.bucket,
         Key: key,
-        ACL: acl as ObjectCannedACL,
+        ACL: acl,
       });
 
-      await this.client.send(command);
+      await client.send(command);
 
       if (visibility === 'public') {
         const publicUrl = this.getPublicUrl(key);
@@ -380,6 +423,7 @@ export class S3CompatibleProvider implements StorageProvider {
   }
 
   async getFileVisibility(key: string): Promise<FileVisibilityStatus> {
+    const { client, sdk } = await this.initializeClient();
     try {
       // Check if file exists
       const exists = await this.fileExists(key);
@@ -389,16 +433,15 @@ export class S3CompatibleProvider implements StorageProvider {
 
       // Try to get object ACL
       try {
-        const { GetObjectAclCommand } = await import('@aws-sdk/client-s3');
-        const command = new GetObjectAclCommand({
+        const command = new sdk.GetObjectAclCommand({
           Bucket: this.config.bucket,
           Key: key,
         });
 
-        const response = await this.client.send(command);
+        const response = await client.send(command);
         
         // Check if AllUsers or AuthenticatedUsers has read permission
-        const hasPublicAccess = response.Grants?.some(grant => 
+        const hasPublicAccess = response.Grants?.some((grant: any) => 
           (grant.Grantee?.URI === 'http://acs.amazonaws.com/groups/global/AllUsers' ||
            grant.Grantee?.URI === 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers') &&
           grant.Permission === 'READ',
