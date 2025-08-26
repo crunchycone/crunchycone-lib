@@ -246,6 +246,175 @@ templates/email/
 3. **Keep includes focused** - Each include should have a single responsibility
 4. **Test across languages** - Ensure includes work with different content lengths
 
+### Creating New Includes
+
+Here's a step-by-step guide to creating reusable include components:
+
+#### Step 1: Create the Include File
+
+Create a new `.liquid` file in the `includes/` directory for your default language:
+
+**`templates/email/en/includes/newsletter-signup.liquid`**:
+```liquid
+<mj-section background-color="#f8f9fa">
+  <mj-column>
+    <mj-text align="center" font-weight="bold" font-size="18px">
+      Stay Updated!
+    </mj-text>
+    <mj-text align="center">
+      Subscribe to our newsletter for the latest updates from {{ appName | default: 'our team' }}.
+    </mj-text>
+    <mj-button href="{{ newsletterSignupUrl | default: '#' }}" background-color="#28a745">
+      Subscribe Now
+    </mj-button>
+  </mj-column>
+</mj-section>
+```
+
+#### Step 2: Use the Include in Templates
+
+Add the include to any template using the `{% include %}` tag:
+
+**`templates/email/en/welcome/template-html.mjml`**:
+```mjml
+<mjml>
+  <mj-head>
+    <mj-title>Welcome to {{ appName }}!</mj-title>
+  </mj-head>
+  <mj-body background-color="#f4f4f4">
+    {% include 'header' %}
+    
+    <mj-section background-color="white">
+      <mj-column>
+        <mj-text>Welcome {{ name }}!</mj-text>
+      </mj-column>
+    </mj-section>
+    
+    {% include 'newsletter-signup' %}
+    {% include 'footer' %}
+  </mj-body>
+</mjml>
+```
+
+#### Step 3: Add Translations (Optional)
+
+Create language-specific versions of the include:
+
+**`templates/email/es/includes/newsletter-signup.liquid`**:
+```liquid
+<mj-section background-color="#f8f9fa">
+  <mj-column>
+    <mj-text align="center" font-weight="bold" font-size="18px">
+      ¡Mantente Actualizado!
+    </mj-text>
+    <mj-text align="center">
+      Suscríbete a nuestro boletín para las últimas actualizaciones de {{ appName | default: 'nuestro equipo' }}.
+    </mj-text>
+    <mj-button href="{{ newsletterSignupUrl | default: '#' }}" background-color="#28a745">
+      Suscríbete Ahora
+    </mj-button>
+  </mj-column>
+</mj-section>
+```
+
+#### Step 4: Test the Include
+
+Use the include in your templates and test with different languages:
+
+```typescript
+// Test English version
+const englishResult = await service.renderTemplate({
+  template: 'welcome',
+  to: 'test@example.com',
+  language: 'en',
+  data: {
+    name: 'John Doe',
+    appName: 'MyApp',
+    newsletterSignupUrl: 'https://myapp.com/subscribe'
+  }
+});
+
+// Test Spanish version (will use Spanish include if available)
+const spanishResult = await service.renderTemplate({
+  template: 'welcome',
+  to: 'test@example.com', 
+  language: 'es',
+  data: {
+    name: 'Juan Pérez',
+    appName: 'MiApp',
+    newsletterSignupUrl: 'https://miapp.com/suscribir'
+  }
+});
+
+// Test French version (will fallback to English include)
+const frenchResult = await service.renderTemplate({
+  template: 'welcome',
+  to: 'test@example.com',
+  language: 'fr', // French include doesn't exist, uses English
+  data: {
+    name: 'Jean Dupont',
+    appName: 'MonApp'
+  }
+});
+```
+
+#### Include Naming Conventions
+
+Follow these naming patterns for consistency:
+
+- **Descriptive names**: `newsletter-signup`, `social-links`, `legal-footer`
+- **Component-based**: `cta-button`, `product-showcase`, `testimonial`
+- **Layout-based**: `header`, `footer`, `sidebar`
+- **Use hyphens**: `email-header` not `email_header` or `emailHeader`
+
+#### Common Include Patterns
+
+**Call-to-Action Button (`cta-button.liquid`)**:
+```liquid
+<mj-button 
+  href="{{ ctaUrl }}" 
+  background-color="{{ ctaColor | default: '#007bff' }}"
+  font-size="16px"
+  font-weight="bold"
+>
+  {{ ctaText | default: 'Learn More' }}
+</mj-button>
+```
+
+**Social Links (`social-links.liquid`)**:
+```liquid
+<mj-section>
+  <mj-column>
+    <mj-social font-size="15px" icon-size="30px" mode="horizontal">
+      {% if facebookUrl %}<mj-social-element name="facebook" href="{{ facebookUrl }}"></mj-social-element>{% endif %}
+      {% if twitterUrl %}<mj-social-element name="twitter" href="{{ twitterUrl }}"></mj-social-element>{% endif %}
+      {% if linkedinUrl %}<mj-social-element name="linkedin" href="{{ linkedinUrl }}"></mj-social-element>{% endif %}
+    </mj-social>
+  </mj-column>
+</mj-section>
+```
+
+**Legal Footer (`legal-footer.liquid`)**:
+```liquid
+<mj-section>
+  <mj-column>
+    <mj-text font-size="12px" color="#666666" align="center">
+      <p>
+        You received this email because you signed up for {{ appName | default: 'our service' }}.
+        <br>
+        {% if unsubscribeUrl %}<a href="{{ unsubscribeUrl }}">Unsubscribe</a> | {% endif %}
+        <a href="{{ privacyPolicyUrl | default: '#' }}">Privacy Policy</a>
+      </p>
+      <p>
+        © {{ currentYear | default: '2025' }} {{ companyName | default: appName | default: 'Company Name' }}. All rights reserved.
+        <br>
+        {{ companyAddress | default: 'Company Address' }}
+      </p>
+    </mj-text>
+  </mj-column>
+</mj-section>
+```
+
 ## Available Liquid Filters
 
 - `default: value` - Provides default value if variable is empty
