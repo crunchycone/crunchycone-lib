@@ -650,7 +650,7 @@ export class LocalStorageProvider implements StorageProvider {
       return {
         success: true,
         requestedVisibility: visibility,
-        actualVisibility: 'private', // Files are always private on disk
+        actualVisibility: visibility, // Reflect the actual visibility state from metadata
         publicUrl: visibility === 'public' ? `${this.baseUrl}/${key}` : undefined,
         message: visibility === 'public' 
           ? 'File marked as public. Access controlled by web server endpoint routing.'
@@ -701,7 +701,7 @@ export class LocalStorageProvider implements StorageProvider {
       const isPublic = metadata.visibility === 'public';
       
       return {
-        visibility: 'private', // Always private on disk
+        visibility: isPublic ? 'public' : 'private', // Reflect the actual metadata state
         publicUrl: isPublic ? `${this.baseUrl}/${key}` : undefined,
         canMakePublic: true,
         canMakePrivate: true,
