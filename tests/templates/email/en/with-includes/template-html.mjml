@@ -1,0 +1,24 @@
+<mjml>
+  <mj-head>
+    <mj-title>{{ appName }} - Test Template with Includes</mj-title>
+    <mj-attributes>
+      <mj-text font-size="14px" color="#333333" line-height="20px" />
+      <mj-button background-color="#007bff" color="white" border-radius="4px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f4f4f4">
+    {% include 'header' %}
+    
+    <mj-section background-color="white">
+      <mj-column>
+        <mj-text>
+          <h2>Hello {{ name | default: 'User' }}!</h2>
+          <p>This template demonstrates the use of Liquid includes for common header and footer sections.</p>
+          <p>The header and footer are loaded from separate include files.</p>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    
+    {% include 'footer' %}
+  </mj-body>
+</mjml>

@@ -155,10 +155,11 @@ describe('EmailTemplateService', () => {
     it('should return list of available templates', async () => {
       const templates = await emailTemplateService.getAvailableTemplates();
       
-      expect(templates).toHaveLength(1);
-      expect(templates[0].name).toBe('welcome');
-      expect(templates[0].languages).toContain('en');
-      expect(templates[0].languages).toContain('es');
+      expect(templates.length).toBeGreaterThanOrEqual(1);
+      const welcomeTemplate = templates.find(t => t.name === 'welcome');
+      expect(welcomeTemplate).toBeDefined();
+      expect(welcomeTemplate!.languages).toContain('en');
+      expect(welcomeTemplate!.languages).toContain('es');
     });
   });
 

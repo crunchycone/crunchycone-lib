@@ -158,8 +158,57 @@ describe('MJMLLiquidEngine', () => {
   describe('getAvailableTemplates', () => {
     it('should delegate to provider', async () => {
       const templates = await engine.getAvailableTemplates();
-      expect(templates).toHaveLength(1);
-      expect(templates[0].name).toBe('welcome');
+      expect(templates.length).toBeGreaterThanOrEqual(1);
+      expect(templates.find(t => t.name === 'welcome')).toBeDefined();
+      expect(templates.find(t => t.name === 'with-includes')).toBeDefined();
+      expect(templates.find(t => t.name === 'with-missing-include')).toBeDefined();
+    });
+  });
+
+  describe('liquid includes', () => {
+    it('should render template with includes', async () => {
+      const result = await engine.renderTemplate({
+        template: 'with-includes',
+        to: 'test@example.com',
+        language: 'en',
+        data: {
+          name: 'John Doe',
+          appName: 'CrunchyCone',
+          supportEmail: 'support@crunchycone.com',
+        },
+      });
+
+      expect(result.html).toContain('John Doe');
+      expect(result.html).toContain('Common Header Content');
+      expect(result.html).toContain('Common Footer Content');
+      expect(result.metadata.language).toBe('en');
+    });
+
+    it('should handle includes with language fallback', async () => {
+      const result = await engine.renderTemplate({
+        template: 'with-includes',
+        to: 'test@example.com',
+        language: 'fr', // French template may not have all includes, should fallback to en
+        data: {
+          name: 'Jean Dupont',
+          appName: 'CrunchyCone',
+          supportEmail: 'support@crunchycone.com',
+        },
+      });
+
+      expect(result.html).toContain('Jean Dupont');
+      expect(result.html).toContain('Common Header Content'); // Should use English include as fallback
+    });
+
+    it('should throw error for missing include', async () => {
+      await expect(engine.renderTemplate({
+        template: 'with-missing-include',
+        to: 'test@example.com',
+        data: {
+          name: 'John Doe',
+          appName: 'CrunchyCone',
+        },
+      })).rejects.toThrow(/Failed to lookup.*non-existent-include/);
     });
   });
 });

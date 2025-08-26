@@ -45,6 +45,7 @@ async function loadMJML(): Promise<any> {
 export class MJMLLiquidEngine implements EmailTemplateEngine {
   private liquid: Liquid;
   private templateProvider: TemplateProvider;
+  private currentLanguage?: string;
 
   constructor(templateProvider: TemplateProvider) {
     this.templateProvider = templateProvider;
@@ -57,9 +58,37 @@ export class MJMLLiquidEngine implements EmailTemplateEngine {
       trimTagRight: false,
       trimOutputLeft: false,
       trimOutputRight: false,
+      fs: this.createCustomFileSystem(),
     });
 
     this.registerEmailFilters();
+  }
+
+  private createCustomFileSystem() {
+    return {
+      readFile: async (includeFile: string): Promise<string> => {
+        return await this.templateProvider.readIncludeFile(includeFile, this.currentLanguage);
+      },
+      readFileSync: (includeFile: string): string => {
+        throw new Error('Synchronous file reading not supported. Use async rendering.');
+      },
+      exists: async (includeFile: string): Promise<boolean> => {
+        return await this.templateProvider.includeExists(includeFile, this.currentLanguage)
+          .catch(() => false);
+      },
+      existsSync: (includeFile: string): boolean => {
+        // For now, return true and let the async version handle the actual check
+        return true;
+      },
+      resolve: (root: string, file: string): string => {
+        // Just return the filename as-is since we're using template IDs  
+        return file;
+      },
+      sep: '/',
+      dirname: (path: string) => '',
+      extname: (path: string) => '',
+      isAbsolute: () => false
+    };
   }
 
   private registerEmailFilters() {
@@ -107,6 +136,9 @@ export class MJMLLiquidEngine implements EmailTemplateEngine {
     const { template, data = {}, language } = options;
     
     const resolution = await this.templateProvider.resolveTemplate(template, language);
+    
+    // Set current language for include resolution
+    this.currentLanguage = resolution.language;
     
     // Render MJML template with Liquid preprocessing
     const renderedMjml = await this.liquid.parseAndRender(resolution.files.mjml, data);

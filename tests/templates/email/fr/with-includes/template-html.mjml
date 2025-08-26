@@ -1,0 +1,22 @@
+<mjml>
+  <mj-head>
+    <mj-title>{{ appName }} - Modèle avec Includes</mj-title>
+    <mj-attributes>
+      <mj-text font-size="14px" color="#333333" line-height="20px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f4f4f4">
+    {% include 'header' %}
+    
+    <mj-section background-color="white">
+      <mj-column>
+        <mj-text>
+          <h2>Bonjour {{ name | default: 'Utilisateur' }}!</h2>
+          <p>Ce modèle démontre l'utilisation des includes Liquid. Les includes manquants utilisent la version anglaise par défaut.</p>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    
+    {% include 'footer' %}
+  </mj-body>
+</mjml>

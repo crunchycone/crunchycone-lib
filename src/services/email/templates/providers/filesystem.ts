@@ -161,6 +161,56 @@ export class FilesystemTemplateProvider implements TemplateProvider {
     }
   }
 
+  async readIncludeFile(includeFileName: string, language?: string): Promise<string> {
+    const targetLanguage = language || this.defaultLanguage;
+    
+    // Try requested language first
+    let includePath = join(this.templatesPath, targetLanguage, 'includes', includeFileName);
+    
+    // Add .liquid extension if not present
+    if (!includeFileName.endsWith('.liquid')) {
+      includePath += '.liquid';
+    }
+    
+    if (!existsSync(includePath)) {
+      // Fallback to default language
+      includePath = join(this.templatesPath, this.defaultLanguage, 'includes', includeFileName);
+      if (!includeFileName.endsWith('.liquid')) {
+        includePath += '.liquid';
+      }
+    }
+
+    if (!existsSync(includePath)) {
+      throw new Error(`Include file '${includeFileName}' not found in language '${targetLanguage}' or default language`);
+    }
+
+    return readFileSync(includePath, 'utf-8');
+  }
+
+  async includeExists(includeFileName: string, language?: string): Promise<boolean> {
+    const targetLanguage = language || this.defaultLanguage;
+    
+    // Try requested language first
+    let includePath = join(this.templatesPath, targetLanguage, 'includes', includeFileName);
+    
+    // Add .liquid extension if not present
+    if (!includeFileName.endsWith('.liquid')) {
+      includePath += '.liquid';
+    }
+    
+    if (existsSync(includePath)) {
+      return true;
+    }
+    
+    // Fallback to default language
+    includePath = join(this.templatesPath, this.defaultLanguage, 'includes', includeFileName);
+    if (!includeFileName.endsWith('.liquid')) {
+      includePath += '.liquid';
+    }
+    
+    return existsSync(includePath);
+  }
+
   private async getTemplateNames(languagePath: string): Promise<string[]> {
     try {
       const items = await readdir(languagePath);

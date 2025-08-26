@@ -46,6 +46,8 @@ export interface TemplateProvider {
   resolveTemplate(templateName: string, language?: string): Promise<TemplateResolution>;
   getAvailableTemplates(): Promise<TemplateMetadata[]>;
   validateTemplate(templateName: string, language?: string): Promise<boolean>;
+  readIncludeFile(includeFileName: string, language?: string): Promise<string>;
+  includeExists(includeFileName: string, language?: string): Promise<boolean>;
 }
 
 export interface EmailTemplateEngine {

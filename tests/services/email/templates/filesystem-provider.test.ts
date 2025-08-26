@@ -64,7 +64,7 @@ describe('FilesystemTemplateProvider', () => {
     it('should return list of available templates with metadata', async () => {
       const templates = await provider.getAvailableTemplates();
       
-      expect(templates).toHaveLength(1);
+      expect(templates.length).toBeGreaterThanOrEqual(1);
       
       const welcomeTemplate = templates.find(t => t.name === 'welcome');
       expect(welcomeTemplate).toBeDefined();
