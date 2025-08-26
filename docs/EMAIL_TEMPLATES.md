@@ -1,12 +1,13 @@
 # Email Templates System
 
-The CrunchyCone library includes a powerful email templates system that uses MJML (optional dependency) for responsive email design and Liquid for templating logic.
+The CrunchyCone library includes a powerful email templates system that uses MJML v4 for responsive email design and LiquidJS for templating logic with template inheritance support.
 
 ## Features
 
-- **MJML + Liquid**: Combines MJML's responsive email capabilities with Liquid's templating syntax
+- **MJML v4 + LiquidJS**: Combines MJML v4's responsive email capabilities with LiquidJS's templating syntax
+- **Template Includes**: Support for reusable components using `{% include 'filename' %}` syntax
 - **Multi-language support**: Templates can be localized with automatic fallback to English
-- **Provider abstraction**: Filesystem-based provider (database provider planned for future)
+- **Provider abstraction**: Filesystem-based provider with database-compatible architecture
 - **Template validation**: Built-in validation and preview capabilities
 - **Integration**: Works seamlessly with existing email providers
 
@@ -20,7 +21,7 @@ The CrunchyCone library includes a powerful email templates system that uses MJM
 ### 1. Install Optional Dependencies
 
 ```bash
-# MJML is required for responsive email templates
+# MJML v4 is required for responsive email templates
 npm install mjml
 npm install --save-dev @types/mjml
 
@@ -30,17 +31,28 @@ npm install --save-dev @types/mjml
 import { MJMLLiquidEngine } from 'crunchycone-lib/email/templates/engines/mjml-liquid';
 ```
 
+### Requirements
+
+- **MJML v4**: Templates must use MJML v4 syntax (see [Migration Guide](#mjml-v4-migration) below)
+- **Node.js**: Server-side environment required for MJML compilation
+
 ### 2. Create Template Structure
 
 ```
 templates/email/
 ├── en/
+│   ├── includes/
+│   │   ├── header.liquid
+│   │   └── footer.liquid
 │   └── welcome/
 │       ├── template-html.mjml
 │       ├── subject.liquid
 │       ├── template-text.liquid (optional)
 │       └── data-preview.json (optional)
 └── es/
+    ├── includes/
+    │   ├── header.liquid (optional - falls back to en)
+    │   └── footer.liquid (optional - falls back to en)
     └── welcome/
         ├── template-html.mjml
         ├── subject.liquid
@@ -67,17 +79,25 @@ await sendTemplatedEmail({
 
 ## Template Files
 
-### MJML Template (`template-html.mjml`)
+### MJML Template (`template-html.mjml`) - MJML v4 Required
 
 ```mjml
 <!-- Description: Welcome email for new users -->
 <mjml>
   <mj-head>
     <mj-title>Welcome to {{ appName }}!</mj-title>
+    <mj-attributes>
+      <mj-text font-family="Arial, sans-serif" color="#333" />
+    </mj-attributes>
   </mj-head>
-  <mj-body>
-    <mj-section>
+  <mj-body background-color="#f4f4f4">
+    {% include 'header' %}
+    
+    <mj-section background-color="white">
       <mj-column>
+        <mj-text font-size="24px" align="center" font-weight="bold">
+          Welcome to {{ appName }}!
+        </mj-text>
         <mj-text>Hi {{ name }}, welcome to {{ appName }}!</mj-text>
         {% if ctaUrl %}
         <mj-button href="{{ ctaUrl }}">
@@ -86,8 +106,39 @@ await sendTemplatedEmail({
         {% endif %}
       </mj-column>
     </mj-section>
+    
+    {% include 'footer' %}
   </mj-body>
 </mjml>
+```
+
+### Include Files (`includes/*.liquid`)
+
+Create reusable template components in the `includes/` directory:
+
+**`includes/header.liquid`**:
+```liquid
+<mj-section background-color="white">
+  <mj-column>
+    <mj-text align="center" font-size="28px" font-weight="bold" color="#007bff">
+      {{ appName | default: 'Your App' }}
+    </mj-text>
+    <mj-divider border-color="#e0e0e0" />
+  </mj-column>
+</mj-section>
+```
+
+**`includes/footer.liquid`**:
+```liquid
+<mj-section background-color="white">
+  <mj-column>
+    <mj-divider border-color="#f0f0f0" />
+    <mj-text font-size="12px" color="#666666" align="center">
+      <p>Need help? Contact us at {{ supportEmail | default: 'support@example.com' }}</p>
+      <p>© {{ appName | default: 'Your Company' }} 2025. All rights reserved.</p>
+    </mj-text>
+  </mj-column>
+</mj-section>
 ```
 
 ### Subject Template (`subject.liquid`)
@@ -147,6 +198,53 @@ Each email template consists of the following files:
 - Development utilities
 
 The CLI tool merges `data-preview.json` with any custom data provided via the `--data` parameter, with custom data taking precedence.
+
+## Template Includes
+
+The system supports LiquidJS includes for reusable template components:
+
+### Using Includes
+
+Use the `{% include %}` tag to include reusable components:
+
+```liquid
+{% include 'header' %}
+{% include 'footer' %}
+{% include 'newsletter-signup' %}
+```
+
+### Include Features
+
+- **Language-aware**: Includes automatically use the correct language version
+- **Fallback support**: If an include doesn't exist in the requested language, falls back to English
+- **Automatic extension**: `.liquid` extension is added automatically if not specified
+- **Template variables**: All template data is available in includes
+
+### Include Organization
+
+```
+templates/email/
+├── en/
+│   ├── includes/
+│   │   ├── header.liquid
+│   │   ├── footer.liquid
+│   │   ├── social-links.liquid
+│   │   └── unsubscribe.liquid
+│   └── templates...
+└── es/
+    ├── includes/
+    │   ├── header.liquid (Spanish version)
+    │   └── footer.liquid (Spanish version)
+    │   # social-links.liquid missing - will use English fallback
+    └── templates...
+```
+
+### Best Practices
+
+1. **Create English includes first** - They serve as fallbacks
+2. **Use semantic names** - `header`, `footer`, `cta-button` vs generic names
+3. **Keep includes focused** - Each include should have a single responsibility
+4. **Test across languages** - Ensure includes work with different content lengths
 
 ## Available Liquid Filters
 
@@ -549,7 +647,80 @@ npm test -- --testPathPattern=email-templates
 
 Test coverage includes:
 - Template provider functionality
-- MJML + Liquid rendering
+- MJML + Liquid rendering with includes
 - Multi-language support and fallbacks
 - Email service integration
 - Error handling
+
+## MJML v4 Migration
+
+The email templates system requires MJML v4 syntax. If you have existing MJML v3 templates, they need to be updated.
+
+### Key Changes in MJML v4
+
+1. **Remove `<mj-container>` tags** - No longer needed, handled automatically
+2. **Update attribute names** - `text-align` becomes `align`
+3. **Use `mj-attributes` for global styles**
+
+### Migration Examples
+
+**MJML v3 (deprecated):**
+```mjml
+<mj-body>
+  <mj-container background-color="white">
+    <mj-section>
+      <mj-column>
+        <mj-text text-align="center">Content</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-container>
+</mj-body>
+```
+
+**MJML v4 (required):**
+```mjml
+<mj-body background-color="#f4f4f4">
+  <mj-section background-color="white">
+    <mj-column>
+      <mj-text align="center">Content</mj-text>
+    </mj-column>
+  </mj-section>
+</mj-body>
+```
+
+### Common Attribute Changes
+
+| MJML v3 | MJML v4 |
+|---------|---------|
+| `text-align="center"` | `align="center"` |
+| `<mj-container>` | Remove entirely |
+| Background colors | Move to `<mj-section>` or `<mj-body>` |
+
+### Validation
+
+The system will show validation errors for MJML v3 syntax:
+
+```
+ValidationError: Attribute text-align is illegal
+ValidationError: mj-container is deprecated
+```
+
+Update your templates to MJML v4 syntax to resolve these errors.
+
+### Migration Tool
+
+MJML provides an automatic migration tool, but manual review is recommended:
+
+```bash
+# Install MJML CLI
+npm install -g mjml
+
+# Migrate template (review output before using)
+mjml --migrate your-template.mjml
+```
+
+### Resources
+
+- [MJML v4 Migration Guide](https://mjml.io/guides/migration-to-mjml-4)
+- [MJML v4 Documentation](https://mjml.io/documentation/)
+- [MJML Component Reference](https://mjml.io/components/)

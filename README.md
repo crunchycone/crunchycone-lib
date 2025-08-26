@@ -3,7 +3,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Apache License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-404%20passing-brightgreen.svg)]()
-[![npm version](https://img.shields.io/badge/npm-0.1.12-blue.svg)](package.json)
+[![npm version](https://img.shields.io/badge/npm-0.1.13-blue.svg)](package.json)
 
 A comprehensive TypeScript library providing unified abstractions for email services, storage providers, and template engines. Designed for CrunchyCone Starter Projects but flexible enough for any TypeScript/JavaScript application.
 
@@ -13,7 +13,8 @@ A comprehensive TypeScript library providing unified abstractions for email serv
 - **Unified API** across 7+ email providers (SendGrid, Resend, Amazon SES, SMTP, Mailgun, CrunchyCone, Console)
 - **Provider abstraction** - switch providers without code changes
 - **Provider availability checking** - programmatically check if dependencies are available
-- **Built-in templates** with MJML + Liquid templating
+- **Built-in templates** with MJML v4 + LiquidJS templating
+- **Template includes** - reusable components with `{% include 'filename' %}`
 - **Multi-language support** with automatic fallbacks
 - **Development-friendly** console provider for testing
 
@@ -48,7 +49,7 @@ npm install @google-cloud/storage
 # For Azure Storage
 npm install @azure/storage-blob
 
-# For MJML email templating (responsive email templates)
+# For MJML v4 email templating (responsive email templates)
 npm install mjml
 npm install --save-dev @types/mjml
 
@@ -139,7 +140,7 @@ const url = await storage.getFileUrl(result.key);
 console.log(`File available at: ${url}`);
 ```
 
-### Email Templates
+### Email Templates (MJML v4 + LiquidJS)
 
 ```typescript
 import { createEmailTemplateService } from 'crunchycone-lib/email/templates';
@@ -149,9 +150,10 @@ const templates = createEmailTemplateService({
   templatesPath: './templates/email'
 });
 
-// Render template with data
+// Render template with data and includes
 const rendered = await templates.renderTemplate('welcome', 'en', {
   userName: 'John Doe',
+  appName: 'MyApp',
   activationUrl: 'https://app.example.com/activate/123'
 });
 
@@ -164,10 +166,22 @@ await emailService.sendEmail({
 });
 ```
 
+**Template Structure with Includes:**
+```
+templates/email/
+├── en/
+│   ├── includes/
+│   │   ├── header.liquid
+│   │   └── footer.liquid
+│   └── welcome/
+│       ├── template-html.mjml (uses {% include 'header' %})
+│       └── subject.liquid
+```
+
 ## 📚 Documentation
 
 - **[Email Providers](docs/EMAIL_PROVIDERS.md)** - Complete guide to all supported email providers
-- **[Email Templates](docs/EMAIL_TEMPLATES.md)** - MJML + Liquid templating system
+- **[Email Templates](docs/EMAIL_TEMPLATES.md)** - MJML v4 + LiquidJS templating with includes
 - **[Storage Providers](docs/STORAGE.md)** - File storage across multiple cloud providers
 - **[CrunchyCone Storage](docs/CRUNCHYCONE_STORAGE.md)** - CrunchyCone-specific storage features
 - **[Storage CLI](docs/STORAGE_CLI.md)** - Command-line tools for storage testing
