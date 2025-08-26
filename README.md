@@ -2,8 +2,8 @@
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Apache License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-393%20passing-brightgreen.svg)]()
-[![npm version](https://img.shields.io/badge/npm-0.1.0-blue.svg)](package.json)
+[![Tests](https://img.shields.io/badge/Tests-404%20passing-brightgreen.svg)]()
+[![npm version](https://img.shields.io/badge/npm-0.1.10-blue.svg)](package.json)
 
 A comprehensive TypeScript library providing unified abstractions for email services, storage providers, and template engines. Designed for CrunchyCone Starter Projects but flexible enough for any TypeScript/JavaScript application.
 
@@ -12,19 +12,21 @@ A comprehensive TypeScript library providing unified abstractions for email serv
 ### ✉️ Email Services
 - **Unified API** across 7+ email providers (SendGrid, Resend, Amazon SES, SMTP, Mailgun, CrunchyCone, Console)
 - **Provider abstraction** - switch providers without code changes
+- **Provider availability checking** - programmatically check if dependencies are available
 - **Built-in templates** with MJML + Liquid templating
 - **Multi-language support** with automatic fallbacks
 - **Development-friendly** console provider for testing
 
 ### 📁 Storage Services
 - **Multi-provider support** (AWS S3, Google Cloud, Azure Blob, CrunchyCone, LocalStorage, and more)
+- **Provider availability checking** - detect available storage providers
 - **File streaming** with range request support
 - **Metadata management** and search capabilities
 - **Public/private file visibility** controls
 - **External ID mapping** for easy integration
 
 ### 🛡️ Authentication
-- **CrunchyCone Auth** integration with keychain support
+- **CrunchyCone Auth** integration with keychain support (keytar)
 - **Environment variable** fallbacks
 - **API key management** utilities
 
@@ -72,6 +74,34 @@ const result = await emailService.sendEmail({
 });
 
 console.log(`Email sent with ID: ${result.messageId}`);
+```
+
+### Provider Availability Checking
+
+```typescript
+import { isEmailProviderAvailable, getAvailableEmailProviders, isStorageProviderAvailable, getAvailableStorageProviders } from 'crunchycone-lib';
+
+// Check if specific providers are available (has dependencies installed)
+const sendGridAvailable = await isEmailProviderAvailable('sendgrid');
+const s3Available = await isStorageProviderAvailable('s3');
+
+console.log('SendGrid available:', sendGridAvailable);
+console.log('S3 available:', s3Available);
+
+// Get all available providers
+const availableEmailProviders = await getAvailableEmailProviders();
+const availableStorageProviders = await getAvailableStorageProviders();
+
+console.log('Available email providers:', availableEmailProviders);
+// Output: ['console', 'smtp', 'crunchycone', 'mailgun'] (+ others if dependencies installed)
+
+console.log('Available storage providers:', availableStorageProviders);  
+// Output: ['localstorage', 'crunchycone'] (+ others if dependencies installed)
+
+// Check provider availability on service instances
+const emailService = createEmailService('console');
+const available = await emailService.isAvailable();
+console.log('Service available:', available); // true
 ```
 
 ### Specific Provider Import (No Optional Dependencies)
@@ -181,16 +211,16 @@ The library is organized into focused modules with **zero optional dependencies*
 
 ```typescript
 // Core exports (no optional dependencies)
-import { createEmailService, EmailService } from 'crunchycone-lib';
+import { createEmailService, EmailService, isEmailProviderAvailable, getAvailableEmailProviders } from 'crunchycone-lib';
 
-// Email services (no optional dependencies)
-import { createEmailService } from 'crunchycone-lib/email';
+// Email services (no optional dependencies) 
+import { createEmailService, isEmailProviderAvailable, getAvailableEmailProviders } from 'crunchycone-lib/email';
 
 // Email templates (core functionality, no optional dependencies)
 import { createEmailTemplateService } from 'crunchycone-lib/email/templates';
 
 // Storage services (loads core without providers)
-import { StorageService } from 'crunchycone-lib/storage';
+import { StorageService, isStorageProviderAvailable, getAvailableStorageProviders } from 'crunchycone-lib/storage';
 
 // Authentication utilities (no optional dependencies)
 import { getCrunchyConeAPIKey } from 'crunchycone-lib/auth';
@@ -319,6 +349,23 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - 📧 Email: support@crunchycone.com
 - 📖 Documentation: [docs/](docs/)
 - 🐛 Issues: [GitHub Issues](https://github.com/crunchycone/crunchycone-lib/issues)
+
+## 📋 Recent Changes
+
+### Version 0.1.10
+- **🆕 Provider Availability Checking**: New system to check if providers have required dependencies installed
+  - `isEmailProviderAvailable()` and `getAvailableEmailProviders()` functions
+  - `isStorageProviderAvailable()` and `getAvailableStorageProviders()` functions
+  - `isAvailable()` method on all provider instances
+  - 5-minute caching for performance optimization
+- **🔧 LocalStorage Visibility Fix**: Corrected file visibility reporting to accurately reflect public/private state
+- **🔐 CrunchyCone Keytar Integration**: Enhanced API key resolution with automatic keychain fallback
+- **✅ Comprehensive Testing**: Added provider availability test suite with 11 new test cases
+
+### Version 0.1.9
+- **🔄 Optional Dependencies**: Made cloud provider dependencies truly optional with dynamic imports
+- **🛠️ Factory Improvements**: All email providers now work through factory with graceful error handling
+- **📦 Next.js Compatibility**: Fixed bundler issues preventing library import in Next.js applications
 
 ---
 

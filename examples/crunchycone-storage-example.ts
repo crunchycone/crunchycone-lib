@@ -12,6 +12,7 @@
  */
 
 import { CrunchyConeProvider } from '../src/services/storage/providers/crunchycone';
+import { isStorageProviderAvailable, getAvailableStorageProviders, createStorageProvider } from '../src/services/storage/storage';
 
 async function demonstrateCrunchyConeStorage() {
   console.log('🔧 CrunchyCone Storage Provider Example');
@@ -184,6 +185,53 @@ async function demonstrateCrunchyConeStorage() {
   console.log('• Custom storage keys and paths');
 }
 
+async function providerAvailabilityExample() {
+  console.log('\n🔍 Provider Availability Example');
+  console.log('='.repeat(50));
+
+  try {
+    // Check individual providers
+    const crunchyConeAvailable = await isStorageProviderAvailable('crunchycone');
+    const s3Available = await isStorageProviderAvailable('s3');
+    const gcpAvailable = await isStorageProviderAvailable('gcp');
+    const azureAvailable = await isStorageProviderAvailable('azure');
+    const localStorageAvailable = await isStorageProviderAvailable('localstorage');
+    
+    console.log('📊 Individual Provider Availability:');
+    console.log(`  CrunchyCone: ${crunchyConeAvailable ? '✅ Available' : '❌ Not available'}`);
+    console.log(`  AWS S3: ${s3Available ? '✅ Available' : '❌ Not available'}`);
+    console.log(`  Google Cloud: ${gcpAvailable ? '✅ Available' : '❌ Not available'}`);
+    console.log(`  Azure Blob: ${azureAvailable ? '✅ Available' : '❌ Not available'}`);
+    console.log(`  LocalStorage: ${localStorageAvailable ? '✅ Available' : '❌ Not available'}`);
+    
+    // Get all available providers
+    const availableProviders = await getAvailableStorageProviders();
+    console.log('\n📋 All Available Providers:', availableProviders.join(', '));
+    
+    // Check service instance availability
+    const storageProvider = createStorageProvider('crunchycone', {});
+    const serviceAvailable = await storageProvider.isAvailable();
+    console.log(`🔧 CrunchyCone service instance available: ${serviceAvailable ? '✅ Yes' : '❌ No'}`);
+    
+    // Demonstrate graceful fallback
+    console.log('\n🔄 Graceful Provider Selection:');
+    let selectedProvider = 'localstorage'; // fallback
+    
+    if (await isStorageProviderAvailable('crunchycone')) {
+      selectedProvider = 'crunchycone';
+    } else if (await isStorageProviderAvailable('s3')) {
+      selectedProvider = 's3';
+    } else if (await isStorageProviderAvailable('gcp')) {
+      selectedProvider = 'gcp';
+    }
+    
+    console.log(`🎯 Selected provider: ${selectedProvider}`);
+    
+  } catch (error) {
+    console.error('💥 Error checking provider availability:', error);
+  }
+}
+
 // Configuration check
 function checkConfiguration() {
   const required = ['CRUNCHYCONE_API_URL', 'CRUNCHYCONE_API_KEY', 'CRUNCHYCONE_PROJECT_ID'];
@@ -201,10 +249,22 @@ function checkConfiguration() {
   }
 }
 
+async function main() {
+  console.log('🔧 CrunchyCone Storage Provider Examples');
+  console.log('='.repeat(50));
+  
+  try {
+    await providerAvailabilityExample();
+    await demonstrateCrunchyConeStorage();
+  } catch (error) {
+    console.error('💥 Error running examples:', error instanceof Error ? error.message : error);
+  }
+}
+
 // Run the example
 if (require.main === module) {
   checkConfiguration();
-  demonstrateCrunchyConeStorage().catch(console.error);
+  main().catch(console.error);
 }
 
-export { demonstrateCrunchyConeStorage };
+export { demonstrateCrunchyConeStorage, providerAvailabilityExample };

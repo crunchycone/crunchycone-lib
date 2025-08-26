@@ -34,6 +34,48 @@ await emailService.sendEmail({
 });
 ```
 
+### Provider Availability Checking
+
+Check if email providers are available before using them:
+
+```typescript
+import { isEmailProviderAvailable, getAvailableEmailProviders, createEmailService } from 'crunchycone-lib';
+
+// Check if specific providers are available (dependencies installed)
+const sendGridAvailable = await isEmailProviderAvailable('sendgrid');
+const sesAvailable = await isEmailProviderAvailable('ses');
+
+console.log('SendGrid available:', sendGridAvailable);
+console.log('Amazon SES available:', sesAvailable);
+
+// Get all available email providers
+const availableProviders = await getAvailableEmailProviders();
+console.log('Available providers:', availableProviders);
+// Example output: ['console', 'smtp', 'crunchycone', 'mailgun']
+// (SendGrid, SES, Resend only included if their dependencies are installed)
+
+// Check availability on service instances
+const emailService = createEmailService('console');
+const available = await emailService.isAvailable();
+console.log('Console service available:', available); // Always true
+
+// Gracefully handle unavailable providers
+if (await isEmailProviderAvailable('sendgrid')) {
+  const service = createEmailService('sendgrid');
+  await service.sendEmail(emailParams);
+} else {
+  console.log('SendGrid not available, falling back to console');
+  const service = createEmailService('console');
+  await service.sendEmail(emailParams);
+}
+```
+
+**Provider Availability by Type:**
+
+- **Always Available** (no optional dependencies): `console`, `smtp`, `crunchycone`, `mailgun`
+- **Conditionally Available** (require optional dependencies): `sendgrid`, `resend`, `ses`
+- **Results are cached** for 5 minutes to improve performance
+
 ### Using Environment Variables
 
 Set the `EMAIL_PROVIDER` environment variable to automatically select the provider:
@@ -279,10 +321,19 @@ const emailService = new MailgunEmailService({
 **Environment Variables**:
 ```bash
 CRUNCHYCONE_EMAIL_PROVIDER=crunchycone
-CRUNCHYCONE_API_KEY=your_crunchycone_api_key          # Required
+CRUNCHYCONE_API_KEY=your_crunchycone_api_key          # Optional if stored in keychain
 CRUNCHYCONE_EMAIL_BASE_URL=https://api.crunchycone.com # Optional (defaults to https://api.crunchycone.com)
 CRUNCHYCONE_EMAIL_FROM_EMAIL=noreply@crunchycone.com   # Optional (sets default from address)
 CRUNCHYCONE_EMAIL_FROM_NAME=CrunchyCone Platform       # Optional (sets default from name)
+```
+
+**Keychain Authentication** (automatic keytar integration):
+```bash
+# Store API key in keychain using CrunchyCone CLI
+crunchycone auth login
+
+# The email service will automatically use the keychain if CRUNCHYCONE_API_KEY is not set
+# Provides secure, cross-platform keychain access without exposing keys in environment
 ```
 
 The CrunchyCone provider integrates with the CrunchyCone email service API, offering enterprise-grade email delivery with built-in features like special email handling and comprehensive status tracking.

@@ -43,6 +43,53 @@ const fileInfo = await findFileByExternalId('user-123-avatar');
 console.log('File info:', fileInfo);
 ```
 
+### Provider Availability Checking
+
+Check if storage providers are available before using them:
+
+```typescript
+import { isStorageProviderAvailable, getAvailableStorageProviders } from 'crunchycone-lib/storage';
+import { LocalStorageProvider } from 'crunchycone-lib/storage/providers/localstorage';
+
+// Check if specific providers are available (dependencies installed)
+const s3Available = await isStorageProviderAvailable('s3');
+const gcpAvailable = await isStorageProviderAvailable('gcp');
+const azureAvailable = await isStorageProviderAvailable('azure');
+
+console.log('AWS S3 available:', s3Available);
+console.log('GCP Storage available:', gcpAvailable);
+console.log('Azure Blob available:', azureAvailable);
+
+// Get all available storage providers
+const availableProviders = await getAvailableStorageProviders();
+console.log('Available providers:', availableProviders);
+// Example output: ['localstorage', 'crunchycone']
+// (Cloud providers only included if their SDKs are installed)
+
+// Check availability on provider instances
+const localStorage = new LocalStorageProvider();
+const available = await localStorage.isAvailable();
+console.log('LocalStorage available:', available); // Always true
+
+// Gracefully handle unavailable providers
+if (await isStorageProviderAvailable('s3')) {
+  console.log('Using AWS S3 storage');
+  // Use S3 provider
+} else if (await isStorageProviderAvailable('localstorage')) {
+  console.log('Falling back to local storage');
+  // Use LocalStorage provider
+}
+```
+
+**Provider Availability by Type:**
+
+- **Always Available** (no optional dependencies): `localstorage`, `crunchycone`
+- **Conditionally Available** (require cloud provider SDKs):
+  - S3-compatible: `aws`, `s3`, `digitalocean`, `wasabi`, `backblaze`, `r2`, `s3-custom`
+  - Google Cloud: `gcp`  
+  - Azure: `azure`
+- **Results are cached** for 5 minutes to improve performance
+
 ### Using Environment Variables
 
 Set the `CRUNCHYCONE_STORAGE_PROVIDER` environment variable to automatically select the provider:

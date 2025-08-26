@@ -18,13 +18,15 @@ The CrunchyCone Storage Provider integrates with the CrunchyCone Storage Service
 ```bash
 # Required
 CRUNCHYCONE_API_URL=https://api.crunchycone.com
-CRUNCHYCONE_API_KEY=your-api-key
+CRUNCHYCONE_API_KEY=your-api-key              # Optional if stored in keychain  
 CRUNCHYCONE_PROJECT_ID=your-project-id
 
 # Optional
 CRUNCHYCONE_USER_ID=user-123  # Can be set via setUserId() method
 CRUNCHYCONE_TIMEOUT=30000     # Request timeout in milliseconds
 ```
+
+**Keychain Authentication**: The CrunchyCone provider automatically falls back to keychain-stored API keys when `CRUNCHYCONE_API_KEY` is not set in environment variables. Use `crunchycone auth login` to store your API key securely.
 
 ### Programmatic Configuration
 

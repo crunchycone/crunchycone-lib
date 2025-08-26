@@ -9,6 +9,7 @@
 
 import { CrunchyConeEmailService } from '../src/services/email/providers/crunchycone';
 import { getCrunchyConeAPIKeyWithFallback, hasCrunchyConeAPIKey } from '../src/auth';
+import { isEmailProviderAvailable, getAvailableEmailProviders, createEmailService } from '../src/services/email/factory';
 import * as dotenv from 'dotenv';
 
 // Load environment variables
@@ -173,6 +174,47 @@ async function listEmailsExample() {
   }
 }
 
+async function providerAvailabilityExample() {
+  console.log('\n🔍 Provider Availability Example');
+  console.log('='.repeat(50));
+
+  try {
+    // Check individual providers
+    const crunchyConeAvailable = await isEmailProviderAvailable('crunchycone');
+    const sendGridAvailable = await isEmailProviderAvailable('sendgrid');
+    const sesAvailable = await isEmailProviderAvailable('ses');
+    
+    console.log('📊 Individual Provider Availability:');
+    console.log(`  CrunchyCone: ${crunchyConeAvailable ? '✅ Available' : '❌ Not available'}`);
+    console.log(`  SendGrid: ${sendGridAvailable ? '✅ Available' : '❌ Not available'}`);
+    console.log(`  Amazon SES: ${sesAvailable ? '✅ Available' : '❌ Not available'}`);
+    
+    // Get all available providers
+    const availableProviders = await getAvailableEmailProviders();
+    console.log('\n📋 All Available Providers:', availableProviders.join(', '));
+    
+    // Check service instance availability
+    const emailService = createEmailService('crunchycone');
+    const serviceAvailable = await emailService.isAvailable();
+    console.log(`🔧 CrunchyCone service instance available: ${serviceAvailable ? '✅ Yes' : '❌ No'}`);
+    
+    // Demonstrate graceful fallback
+    console.log('\n🔄 Graceful Provider Selection:');
+    let selectedProvider = 'console'; // fallback
+    
+    if (await isEmailProviderAvailable('crunchycone')) {
+      selectedProvider = 'crunchycone';
+    } else if (await isEmailProviderAvailable('sendgrid')) {
+      selectedProvider = 'sendgrid';
+    }
+    
+    console.log(`🎯 Selected provider: ${selectedProvider}`);
+    
+  } catch (error) {
+    console.error('💥 Error checking provider availability:', error);
+  }
+}
+
 async function main() {
   console.log('🔧 CrunchyCone Email Service Examples');
   console.log('='.repeat(50));
@@ -198,6 +240,7 @@ async function main() {
       console.log('🔐 Using API key from keychain (crunchycone-cli)');
     }
 
+    await providerAvailabilityExample();
     await basicEmailExample();
     await sensitiveEmailExample();
     await multipleRecipientsExample();
@@ -259,5 +302,6 @@ export {
   sensitiveEmailExample,
   multipleRecipientsExample,
   getEmailStatusExample,
-  listEmailsExample
+  listEmailsExample,
+  providerAvailabilityExample
 };
