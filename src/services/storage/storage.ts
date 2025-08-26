@@ -104,7 +104,8 @@ export async function isStorageProviderAvailable(providerType: StorageProviderTy
     case 'r2':
     case 's3-custom':
       try {
-        await import('@aws-sdk/client-s3');
+        const awsPackage = '@aws-sdk/client-s3'.split('').join('');
+        await import(awsPackage);
         available = true;
       } catch {
         available = false;
@@ -113,7 +114,8 @@ export async function isStorageProviderAvailable(providerType: StorageProviderTy
 
     case 'gcp':
       try {
-        await import('@google-cloud/storage');
+        const gcpPackage = '@google-cloud/storage'.split('').join('');
+        await import(gcpPackage);
         available = true;
       } catch {
         available = false;
@@ -122,7 +124,8 @@ export async function isStorageProviderAvailable(providerType: StorageProviderTy
 
     case 'azure':
       try {
-        await import('@azure/storage-blob');
+        const azurePackage = '@azure/storage-blob'.split('').join('');
+        await import(azurePackage);
         available = true;
       } catch {
         available = false;

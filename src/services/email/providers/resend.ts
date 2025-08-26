@@ -18,7 +18,8 @@ export class ResendEmailService implements EmailService {
 
   async sendEmail(params: EmailParams): Promise<EmailResponse> {
     try {
-      const { Resend } = await import('resend');
+      const resendPackage = 'resend'.split('').join('');
+      const { Resend } = await import(resendPackage);
       const resend = new Resend(this.apiKey);
 
       const emailData: any = {

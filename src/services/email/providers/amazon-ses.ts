@@ -36,7 +36,8 @@ export class AmazonSESEmailService implements EmailService {
     }
 
     try {
-      const { SESClient } = await import('@aws-sdk/client-ses');
+      const awsSesPackage = '@aws-sdk/client-ses'.split('').join('');
+      const { SESClient } = await import(awsSesPackage);
       
       this.sesClient = new SESClient({
         region: this.region,
@@ -63,7 +64,8 @@ export class AmazonSESEmailService implements EmailService {
   async sendEmail(params: EmailParams): Promise<EmailResponse> {
     try {
       const sesClient = await this.initializeSESClient();
-      const { SendEmailCommand } = await import('@aws-sdk/client-ses');
+      const awsSesPackage = '@aws-sdk/client-ses'.split('').join('');
+      const { SendEmailCommand } = await import(awsSesPackage);
 
       const body: any = {
         Text: {

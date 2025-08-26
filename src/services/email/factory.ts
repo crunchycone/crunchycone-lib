@@ -88,7 +88,8 @@ export async function isEmailProviderAvailable(provider: EmailProvider): Promise
 
     case 'sendgrid':
       try {
-        await import('@sendgrid/mail');
+        const sendgridPackage = '@sendgrid/mail'.split('').join('');
+        await import(sendgridPackage);
         available = true;
       } catch {
         available = false;
@@ -97,7 +98,8 @@ export async function isEmailProviderAvailable(provider: EmailProvider): Promise
 
     case 'resend':
       try {
-        await import('resend');
+        const resendPackage = 'resend'.split('').join('');
+        await import(resendPackage);
         available = true;
       } catch {
         available = false;
@@ -106,7 +108,8 @@ export async function isEmailProviderAvailable(provider: EmailProvider): Promise
 
     case 'ses':
       try {
-        await import('@aws-sdk/client-ses');
+        const awsSesPackage = '@aws-sdk/client-ses'.split('').join('');
+        await import(awsSesPackage);
         available = true;
       } catch {
         available = false;

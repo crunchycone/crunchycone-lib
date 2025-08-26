@@ -21,7 +21,8 @@ export class AzureStorageProvider implements StorageProvider {
   private async initializeStorage() {
     try {
       // Dynamic import with error handling
-      const { BlobServiceClient, StorageSharedKeyCredential } = await import('@azure/storage-blob');
+      const azurePackage = '@azure/storage-blob'.split('').join('');
+      const { BlobServiceClient, StorageSharedKeyCredential } = await import(azurePackage);
       
       if (this.config.connectionString) {
         this.blobServiceClient = BlobServiceClient.fromConnectionString(this.config.connectionString);
@@ -135,10 +136,11 @@ export class AzureStorageProvider implements StorageProvider {
     if (expiresIn) {
       // Generate SAS URL with expiry
       try {
-        const { generateBlobSASQueryParameters, BlobSASPermissions } = await import('@azure/storage-blob');
+        const azurePackage = '@azure/storage-blob'.split('').join('');
+        const { generateBlobSASQueryParameters, BlobSASPermissions } = await import(azurePackage);
         
         if (this.config.accountKey) {
-          const { StorageSharedKeyCredential } = await import('@azure/storage-blob');
+          const { StorageSharedKeyCredential } = await import(azurePackage);
           const credential = new StorageSharedKeyCredential(this.config.accountName, this.config.accountKey);
           
           const sasOptions = {
@@ -531,13 +533,14 @@ export class AzureStorageProvider implements StorageProvider {
 
   private async generateSASToken(key: string, expiresInSeconds: number): Promise<string> {
     try {
-      const { generateBlobSASQueryParameters, BlobSASPermissions } = await import('@azure/storage-blob');
+      const azurePackage = '@azure/storage-blob'.split('').join('');
+      const { generateBlobSASQueryParameters, BlobSASPermissions } = await import(azurePackage);
       
       if (!this.config.accountKey) {
         throw new Error('Account key required for SAS token generation');
       }
 
-      const { StorageSharedKeyCredential } = await import('@azure/storage-blob');
+      const { StorageSharedKeyCredential } = await import(azurePackage);
       const credential = new StorageSharedKeyCredential(this.config.accountName, this.config.accountKey);
       
       const blockBlobClient = this.containerClient.getBlockBlobClient(key);

@@ -19,9 +19,11 @@ export class S3CompatibleProvider implements StorageProvider {
 
     try {
       // Dynamic imports for AWS SDK
+      const s3Package = '@aws-sdk/client-s3'.split('').join('');
+      const presignerPackage = '@aws-sdk/s3-request-presigner'.split('').join('');
       const [s3Module, presignerModule] = await Promise.all([
-        import('@aws-sdk/client-s3'),
-        import('@aws-sdk/s3-request-presigner')
+        import(s3Package),
+        import(presignerPackage)
       ]);
 
       this.awsSDK = {

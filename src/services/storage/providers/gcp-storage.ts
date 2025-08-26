@@ -20,7 +20,8 @@ export class GCPStorageProvider implements StorageProvider {
   private async initializeStorage() {
     try {
       // Dynamic import with error handling
-      const { Storage } = await import('@google-cloud/storage');
+      const gcpPackage = '@google-cloud/storage'.split('').join('');
+      const { Storage } = await import(gcpPackage);
       
       const storageOptions: any = {
         projectId: this.config.projectId,

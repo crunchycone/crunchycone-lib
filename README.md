@@ -350,37 +350,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - 📖 Documentation: [docs/](docs/)
 - 🐛 Issues: [GitHub Issues](https://github.com/crunchycone/crunchycone-lib/issues)
 
-## 📋 Recent Changes
-
-### Version 0.1.12
-- **🔧 Build Fix**: Ensured all compiled files are properly distributed in package
-- **📦 Package Integrity**: Fixed module resolution issues in Next.js environments
-
-### Version 0.1.11
-- **🔧 Next.js Compatibility Fix**: Fixed dynamic import issues that caused build errors in Next.js applications
-  - Enhanced provider availability checking to hide package names from static analysis
-  - Fixed `isAvailable()` methods for AWS, Azure, GCP, SendGrid, and Resend providers
-  - Library now works seamlessly in Next.js environments without module resolution errors
-- **📚 Enhanced Storage Documentation**: Updated all storage provider documentation to match email provider format
-  - Added detailed setup guides with clickable links to credential consoles
-  - Included step-by-step instructions for AWS S3, Google Cloud, Azure, DigitalOcean, etc.
-  - Used example credentials to prevent accidental exposure of real keys
-
-### Version 0.1.10
-- **🆕 Provider Availability Checking**: New system to check if providers have required dependencies installed
-  - `isEmailProviderAvailable()` and `getAvailableEmailProviders()` functions
-  - `isStorageProviderAvailable()` and `getAvailableStorageProviders()` functions
-  - `isAvailable()` method on all provider instances
-  - 5-minute caching for performance optimization
-- **🔧 LocalStorage Visibility Fix**: Corrected file visibility reporting to accurately reflect public/private state
-- **🔐 CrunchyCone Keytar Integration**: Enhanced API key resolution with automatic keychain fallback
-- **✅ Comprehensive Testing**: Added provider availability test suite with 11 new test cases
-
-### Version 0.1.9
-- **🔄 Optional Dependencies**: Made cloud provider dependencies truly optional with dynamic imports
-- **🛠️ Factory Improvements**: All email providers now work through factory with graceful error handling
-- **📦 Next.js Compatibility**: Fixed bundler issues preventing library import in Next.js applications
-
 ---
 
 Built with ❤️ and lots of 🍨 by the CrunchyCone team
