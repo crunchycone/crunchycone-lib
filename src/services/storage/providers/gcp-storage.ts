@@ -580,7 +580,8 @@ export class GCPStorageProvider implements StorageProvider {
 
   async isAvailable(): Promise<boolean> {
     try {
-      await import('@google-cloud/storage');
+      const gcpPackage = '@google-cloud/storage'.split('').join('');
+      await import(gcpPackage);
       return true;
     } catch {
       return false;

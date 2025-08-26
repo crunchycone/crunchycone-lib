@@ -3,7 +3,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Apache License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/Tests-404%20passing-brightgreen.svg)]()
-[![npm version](https://img.shields.io/badge/npm-0.1.10-blue.svg)](package.json)
+[![npm version](https://img.shields.io/badge/npm-0.1.11-blue.svg)](package.json)
 
 A comprehensive TypeScript library providing unified abstractions for email services, storage providers, and template engines. Designed for CrunchyCone Starter Projects but flexible enough for any TypeScript/JavaScript application.
 
@@ -351,6 +351,16 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - 🐛 Issues: [GitHub Issues](https://github.com/crunchycone/crunchycone-lib/issues)
 
 ## 📋 Recent Changes
+
+### Version 0.1.11
+- **🔧 Next.js Compatibility Fix**: Fixed dynamic import issues that caused build errors in Next.js applications
+  - Enhanced provider availability checking to hide package names from static analysis
+  - Fixed `isAvailable()` methods for AWS, Azure, GCP, SendGrid, and Resend providers
+  - Library now works seamlessly in Next.js environments without module resolution errors
+- **📚 Enhanced Storage Documentation**: Updated all storage provider documentation to match email provider format
+  - Added detailed setup guides with clickable links to credential consoles
+  - Included step-by-step instructions for AWS S3, Google Cloud, Azure, DigitalOcean, etc.
+  - Used example credentials to prevent accidental exposure of real keys
 
 ### Version 0.1.10
 - **🆕 Provider Availability Checking**: New system to check if providers have required dependencies installed

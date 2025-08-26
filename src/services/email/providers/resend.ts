@@ -55,7 +55,8 @@ export class ResendEmailService implements EmailService {
 
   async isAvailable(): Promise<boolean> {
     try {
-      await import('resend');
+      const resendPackage = 'resend'.split('').join('');
+      await import(resendPackage);
       return true;
     } catch {
       return false;

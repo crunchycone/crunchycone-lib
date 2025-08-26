@@ -559,7 +559,8 @@ export class AzureStorageProvider implements StorageProvider {
 
   async isAvailable(): Promise<boolean> {
     try {
-      await import('@azure/storage-blob');
+      const azurePackage = '@azure/storage-blob'.split('').join('');
+      await import(azurePackage);
       return true;
     } catch {
       return false;

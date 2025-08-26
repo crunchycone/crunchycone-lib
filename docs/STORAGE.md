@@ -113,8 +113,8 @@ CRUNCHYCONE_PROJECT_ID=your-project-id
 
 # Use AWS S3
 CRUNCHYCONE_STORAGE_PROVIDER=aws
-CRUNCHYCONE_AWS_ACCESS_KEY_ID=your_access_key
-CRUNCHYCONE_AWS_SECRET_ACCESS_KEY=your_secret_key
+CRUNCHYCONE_AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+CRUNCHYCONE_AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 CRUNCHYCONE_AWS_REGION=us-east-1
 CRUNCHYCONE_S3_BUCKET=my-app-files
 
@@ -126,14 +126,14 @@ CRUNCHYCONE_GCS_BUCKET=my-bucket
 
 # Use Azure Blob Storage
 CRUNCHYCONE_STORAGE_PROVIDER=azure
-CRUNCHYCONE_AZURE_ACCOUNT_NAME=myaccount
-CRUNCHYCONE_AZURE_ACCOUNT_KEY=account_key
+CRUNCHYCONE_AZURE_ACCOUNT_NAME=mystorageaccount
+CRUNCHYCONE_AZURE_ACCOUNT_KEY=abcd1234efgh5678ijkl9012mnop3456qrst7890uvwx1234yzab5678cdef9012ghij3456klmn7890==
 CRUNCHYCONE_AZURE_CONTAINER=my-container
 
 # Use DigitalOcean Spaces (requires Spaces Access Keys, not API tokens)
 CRUNCHYCONE_STORAGE_PROVIDER=digitalocean
-CRUNCHYCONE_DIGITALOCEAN_SPACES_KEY=DO801KDUEPQT6EZ3BMZC  # Spaces Access Key (not dop_v1_...)
-CRUNCHYCONE_DIGITALOCEAN_SPACES_SECRET=8TJpKBqtXF0i4kIIAKjql1OluDLFdcyKafQd61zUkoI  # Spaces Secret Key
+CRUNCHYCONE_DIGITALOCEAN_SPACES_KEY=DO_KEY_123456789ABCDEFG  # Spaces Access Key (not dop_v1_...)
+CRUNCHYCONE_DIGITALOCEAN_SPACES_SECRET=DO_SECRET_abcdef1234567890abcdef1234567890abcdef12  # Spaces Secret Key
 CRUNCHYCONE_DIGITALOCEAN_SPACES_REGION=nyc3
 CRUNCHYCONE_DIGITALOCEAN_SPACES_BUCKET=my-space
 ```
@@ -271,11 +271,19 @@ const downloadUrl = await getFileUrlByExternalId('invoice-2025-q1-001');
 npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
 ```
 
+**Getting AWS Credentials**:
+1. **Sign up for AWS**: [AWS Console](https://aws.amazon.com/console/)
+2. **Create S3 Bucket**: [S3 Console](https://s3.console.aws.amazon.com/s3/)
+3. **Get Access Keys**: [IAM Console](https://console.aws.amazon.com/iam/)
+   - Go to IAM → Users → Create User
+   - Attach policy: `AmazonS3FullAccess` (or create custom policy)
+   - Create access keys → Download credentials
+
 **Environment Variables**:
 ```bash
 CRUNCHYCONE_STORAGE_PROVIDER=aws
-CRUNCHYCONE_AWS_ACCESS_KEY_ID=your_access_key
-CRUNCHYCONE_AWS_SECRET_ACCESS_KEY=your_secret_key
+CRUNCHYCONE_AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+CRUNCHYCONE_AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 CRUNCHYCONE_AWS_REGION=us-east-1
 CRUNCHYCONE_S3_BUCKET=my-app-files
 CRUNCHYCONE_CLOUDFRONT_DOMAIN=d123abc.cloudfront.net  # Optional CDN
@@ -286,8 +294,8 @@ CRUNCHYCONE_CLOUDFRONT_DOMAIN=d123abc.cloudfront.net  # Optional CDN
 import { AWSS3Provider, setStorageProvider } from 'crunchycone-lib';
 
 const provider = new AWSS3Provider({
-  accessKeyId: 'your_access_key',
-  secretAccessKey: 'your_secret_key',
+  accessKeyId: 'AKIAIOSFODNN7EXAMPLE',
+  secretAccessKey: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
   region: 'us-east-1',
   bucket: 'my-app-files',
   cloudFrontDomain: 'd123abc.cloudfront.net'
@@ -304,6 +312,15 @@ setStorageProvider(provider);
 ```bash
 npm install @google-cloud/storage
 ```
+
+**Getting Google Cloud Credentials**:
+1. **Create GCP Account**: [Google Cloud Console](https://console.cloud.google.com/)
+2. **Create Project**: [Projects Page](https://console.cloud.google.com/projectselector2/home/dashboard)
+3. **Enable Storage API**: [APIs & Services](https://console.cloud.google.com/apis/library/storage.googleapis.com)
+4. **Create Storage Bucket**: [Cloud Storage](https://console.cloud.google.com/storage/browser)
+5. **Create Service Account**: [IAM & Admin → Service Accounts](https://console.cloud.google.com/iam-admin/serviceaccounts)
+   - Create Service Account → Give it "Storage Admin" role
+   - Generate Key → Download JSON file
 
 **Environment Variables**:
 ```bash
@@ -326,7 +343,7 @@ const provider = new GCPStorageProvider({
   cdnUrl: 'https://cdn.example.com'
 });
 
-// Using credentials object
+// Using credentials object (contents of service account JSON)
 const provider2 = new GCPStorageProvider({
   projectId: 'my-project-id',
   credentials: {
@@ -354,23 +371,31 @@ setStorageProvider(provider);
 npm install @azure/storage-blob
 ```
 
+**Getting Azure Storage Credentials**:
+1. **Create Azure Account**: [Azure Portal](https://portal.azure.com/)
+2. **Create Storage Account**: [Storage Accounts](https://portal.azure.com/#view/HubsExtension/BrowseResource/resourceType/Microsoft.Storage%2FstorageAccounts)
+   - Create → Storage Account → Set name and region
+3. **Create Container**: Go to your storage account → Containers → + Container
+4. **Get Access Keys**: Storage Account → Security + networking → Access keys
+   - Copy either key1 or key2
+
 **Environment Variables**:
 ```bash
 CRUNCHYCONE_STORAGE_PROVIDER=azure
 CRUNCHYCONE_AZURE_ACCOUNT_NAME=mystorageaccount
-CRUNCHYCONE_AZURE_ACCOUNT_KEY=account_access_key  # One of: accountKey, sasToken, or connectionString
+CRUNCHYCONE_AZURE_ACCOUNT_KEY=abcd1234efgh5678ijkl9012mnop3456qrst7890uvwx1234yzab5678cdef9012ghij3456klmn7890==
 CRUNCHYCONE_AZURE_CONTAINER=my-container
 CRUNCHYCONE_AZURE_CDN_URL=https://cdn.example.com  # Optional CDN
 ```
 
 **Alternative Authentication Methods**:
 ```bash
-# Using connection string
+# Using connection string (found in Access keys section)
 CRUNCHYCONE_STORAGE_PROVIDER=azure
 CRUNCHYCONE_AZURE_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net
 CRUNCHYCONE_AZURE_CONTAINER=my-container
 
-# Using SAS token
+# Using SAS token (Shared access signature)
 CRUNCHYCONE_STORAGE_PROVIDER=azure
 CRUNCHYCONE_AZURE_ACCOUNT_NAME=mystorageaccount
 CRUNCHYCONE_AZURE_SAS_TOKEN=?sv=2021-06-08&ss=b&srt=sco&sp=rwdlacupx&se=2023-01-01T00:00:00Z&st=2022-01-01T00:00:00Z&spr=https&sig=signature
@@ -384,7 +409,7 @@ import { AzureStorageProvider, setStorageProvider } from 'crunchycone-lib';
 // Using account key
 const provider = new AzureStorageProvider({
   accountName: 'mystorageaccount',
-  accountKey: 'account_access_key',
+  accountKey: 'abcd1234efgh5678ijkl9012mnop3456qrst7890uvwx1234yzab5678cdef9012ghij3456klmn7890==',
   containerName: 'my-container',
   cdnUrl: 'https://cdn.example.com'
 });
@@ -423,21 +448,22 @@ DigitalOcean has **two different types of credentials**:
 
 For this library, you need **Spaces Access Keys**, not API tokens.
 
-**How to Generate Spaces Access Keys**:
-1. Go to [DigitalOcean Spaces Access Keys](https://cloud.digitalocean.com/spaces/access_keys)
-   - **NOT** the general API tokens page
-   - Direct URL: `https://cloud.digitalocean.com/spaces/access_keys`
-2. Click "Generate New Key"
-3. Give it a name (e.g., "crunchycone-lib-storage")
-4. You'll receive **two values**:
+**Getting DigitalOcean Spaces Credentials**:
+1. **Create DO Account**: [DigitalOcean](https://www.digitalocean.com/)
+2. **Create Spaces Bucket**: [Spaces Console](https://cloud.digitalocean.com/spaces)
+   - Create → Space → Choose region and name
+3. **Generate Access Keys**: [Spaces Access Keys](https://cloud.digitalocean.com/spaces/access_keys)
+   - ⚠️ **NOT** the general [API tokens page](https://cloud.digitalocean.com/account/api/tokens)
+   - Click "Generate New Key" → Name it (e.g., "crunchycone-lib-storage")
+4. **Save Credentials**: You'll receive **two values**:
    - **Access Key**: Short format like `DO801KDUEPQT6EZ3BMZC`
    - **Secret Key**: Longer format like `8TJpKBqtXF0i4kIIAKjql1OluDLFdcyKafQd61zUkoI`
 
 **Environment Variables**:
 ```bash
 CRUNCHYCONE_STORAGE_PROVIDER=digitalocean
-CRUNCHYCONE_DIGITALOCEAN_SPACES_KEY=DO801KDUEPQT6EZ3BMZC
-CRUNCHYCONE_DIGITALOCEAN_SPACES_SECRET=8TJpKBqtXF0i4kIIAKjql1OluDLFdcyKafQd61zUkoI
+CRUNCHYCONE_DIGITALOCEAN_SPACES_KEY=DO_KEY_123456789ABCDEFG
+CRUNCHYCONE_DIGITALOCEAN_SPACES_SECRET=DO_SECRET_abcdef1234567890abcdef1234567890abcdef12
 CRUNCHYCONE_DIGITALOCEAN_SPACES_REGION=nyc3
 CRUNCHYCONE_DIGITALOCEAN_SPACES_BUCKET=my-space
 CRUNCHYCONE_DIGITALOCEAN_CDN_ENDPOINT=https://my-space.nyc3.cdn.digitaloceanspaces.com  # Optional
@@ -448,8 +474,8 @@ CRUNCHYCONE_DIGITALOCEAN_CDN_ENDPOINT=https://my-space.nyc3.cdn.digitaloceanspac
 import { DigitalOceanSpacesProvider, setStorageProvider } from 'crunchycone-lib';
 
 const provider = new DigitalOceanSpacesProvider({
-  accessKeyId: 'your_key',
-  secretAccessKey: 'your_secret',
+  accessKeyId: 'DO_KEY_123456789ABCDEFG',
+  secretAccessKey: 'DO_SECRET_abcdef1234567890abcdef1234567890abcdef12',
   region: 'nyc3',
   bucket: 'my-space',
   cdnEndpoint: 'https://my-space.nyc3.cdn.digitaloceanspaces.com'
@@ -462,11 +488,23 @@ setStorageProvider(provider);
 
 **Dependencies**: `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` (peer dependencies)
 
+**Installation**:
+```bash
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
+**Getting Wasabi Credentials**:
+1. **Create Wasabi Account**: [Wasabi](https://wasabi.com/)
+2. **Create Bucket**: [Wasabi Console](https://console.wasabisys.com/)
+   - Buckets → Create Bucket → Choose region
+3. **Create Access Keys**: [Access Keys](https://console.wasabisys.com/access_keys)
+   - Create New Access Key → Name it → Download credentials
+
 **Environment Variables**:
 ```bash
 CRUNCHYCONE_STORAGE_PROVIDER=wasabi
-CRUNCHYCONE_WASABI_ACCESS_KEY=your_key
-CRUNCHYCONE_WASABI_SECRET_KEY=your_secret
+CRUNCHYCONE_WASABI_ACCESS_KEY=WAS_ACCESS_KEY_123456789
+CRUNCHYCONE_WASABI_SECRET_KEY=WAS_SECRET_abcdef1234567890abcdef1234567890
 CRUNCHYCONE_WASABI_REGION=us-east-1
 CRUNCHYCONE_WASABI_BUCKET=my-bucket
 ```
@@ -475,11 +513,23 @@ CRUNCHYCONE_WASABI_BUCKET=my-bucket
 
 **Dependencies**: `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` (peer dependencies)
 
+**Installation**:
+```bash
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
+**Getting Backblaze B2 Credentials**:
+1. **Create Backblaze Account**: [Backblaze](https://www.backblaze.com/)
+2. **Create Bucket**: [B2 Console](https://secure.backblaze.com/b2_buckets.htm)
+   - Create Bucket → Choose settings and region
+3. **Create Application Key**: [App Keys](https://secure.backblaze.com/app_keys.htm)
+   - Add Application Key → Give it access to your bucket
+
 **Environment Variables**:
 ```bash
 CRUNCHYCONE_STORAGE_PROVIDER=backblaze
-CRUNCHYCONE_BACKBLAZE_KEY_ID=your_key_id
-CRUNCHYCONE_BACKBLAZE_APPLICATION_KEY=your_app_key
+CRUNCHYCONE_BACKBLAZE_KEY_ID=B2_KEY_ID_1234567890abcdef
+CRUNCHYCONE_BACKBLAZE_APPLICATION_KEY=B2_APP_KEY_abcdef1234567890abcdef1234567890abcdef12
 CRUNCHYCONE_BACKBLAZE_REGION=us-west-000
 CRUNCHYCONE_BACKBLAZE_BUCKET=my-bucket
 ```
@@ -488,27 +538,46 @@ CRUNCHYCONE_BACKBLAZE_BUCKET=my-bucket
 
 **Dependencies**: `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` (peer dependencies)
 
+**Installation**:
+```bash
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
+
+**Getting Cloudflare R2 Credentials**:
+1. **Create Cloudflare Account**: [Cloudflare](https://www.cloudflare.com/)
+2. **Create R2 Bucket**: [R2 Console](https://dash.cloudflare.com/r2/)
+   - Create bucket → Choose name and settings
+3. **Create API Token**: [R2 Tokens](https://dash.cloudflare.com/profile/api-tokens)
+   - Create Token → Custom token → R2:Edit permissions
+4. **Get Account ID**: [Account Settings](https://dash.cloudflare.com/profile)
+   - Copy Account ID from sidebar
+
 **Environment Variables**:
 ```bash
 CRUNCHYCONE_STORAGE_PROVIDER=r2
-CRUNCHYCONE_R2_ACCESS_KEY_ID=your_access_key
-CRUNCHYCONE_R2_SECRET_ACCESS_KEY=your_secret_key
-CRUNCHYCONE_R2_ACCOUNT_ID=your_account_id
+CRUNCHYCONE_R2_ACCESS_KEY_ID=CF_R2_ACCESS_123456789abcdef
+CRUNCHYCONE_R2_SECRET_ACCESS_KEY=CF_R2_SECRET_abcdef1234567890abcdef1234567890abcdef
+CRUNCHYCONE_R2_ACCOUNT_ID=1234567890abcdef1234567890abcdef
 CRUNCHYCONE_R2_BUCKET=my-bucket
 CRUNCHYCONE_R2_PUBLIC_DOMAIN=files.mydomain.com  # Optional custom domain
 ```
 
 ### Custom S3-Compatible Provider
 
-For other S3-compatible services:
+For other S3-compatible services (MinIO, etc.):
 
 **Dependencies**: `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` (peer dependencies)
+
+**Installation**:
+```bash
+npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
+```
 
 **Environment Variables**:
 ```bash
 CRUNCHYCONE_STORAGE_PROVIDER=s3-custom
-CRUNCHYCONE_S3_ACCESS_KEY_ID=your_key
-CRUNCHYCONE_S3_SECRET_ACCESS_KEY=your_secret
+CRUNCHYCONE_S3_ACCESS_KEY_ID=CUSTOM_ACCESS_KEY_123456
+CRUNCHYCONE_S3_SECRET_ACCESS_KEY=CUSTOM_SECRET_abcdef1234567890abcdef1234567890
 CRUNCHYCONE_S3_REGION=us-east-1
 CRUNCHYCONE_S3_BUCKET=my-bucket
 CRUNCHYCONE_S3_ENDPOINT=https://s3.example.com
@@ -1231,15 +1300,15 @@ CRUNCHYCONE_STORAGE_PROVIDER=localstorage
 
 # Staging
 CRUNCHYCONE_STORAGE_PROVIDER=digitalocean
-CRUNCHYCONE_DIGITALOCEAN_SPACES_KEY=staging_key
-CRUNCHYCONE_DIGITALOCEAN_SPACES_SECRET=staging_secret
+CRUNCHYCONE_DIGITALOCEAN_SPACES_KEY=DO_STAGING_KEY_123ABCDEF
+CRUNCHYCONE_DIGITALOCEAN_SPACES_SECRET=DO_STAGING_SECRET_abcdef1234567890abcdef12
 CRUNCHYCONE_DIGITALOCEAN_SPACES_REGION=nyc3
 CRUNCHYCONE_DIGITALOCEAN_SPACES_BUCKET=staging-files
 
 # Production
 CRUNCHYCONE_STORAGE_PROVIDER=aws
-CRUNCHYCONE_AWS_ACCESS_KEY_ID=prod_key
-CRUNCHYCONE_AWS_SECRET_ACCESS_KEY=prod_secret
+CRUNCHYCONE_AWS_ACCESS_KEY_ID=AKIAPRODEXAMPLEKEY
+CRUNCHYCONE_AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYPRODUCTION
 CRUNCHYCONE_AWS_REGION=us-east-1
 CRUNCHYCONE_S3_BUCKET=production-files
 ```
@@ -1392,8 +1461,8 @@ if (fileInfo?.metadata) {
    - ✅ Correct: Spaces access keys from `https://cloud.digitalocean.com/spaces/access_keys`
 
    Spaces access keys look like:
-   - Access Key: `DO801KDUEPQT6EZ3BMZC` (not `dop_v1_...`)
-   - Secret Key: `8TJpKBqtXF0i4kIIAKjql1OluDLFdcyKafQd61zUkoI`
+   - Access Key: `DO_KEY_123456789ABCDEFG` (not `dop_v1_...`)
+   - Secret Key: `DO_SECRET_abcdef1234567890abcdef1234567890abcdef12`
 
 3. **Invalid Configuration**:
    ```

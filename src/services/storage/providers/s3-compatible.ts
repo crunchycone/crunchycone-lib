@@ -509,7 +509,8 @@ export class S3CompatibleProvider implements StorageProvider {
 
   async isAvailable(): Promise<boolean> {
     try {
-      await import('@aws-sdk/client-s3');
+      const awsPackage = '@aws-sdk/client-s3'.split('').join('');
+      await import(awsPackage);
       return true;
     } catch {
       return false;

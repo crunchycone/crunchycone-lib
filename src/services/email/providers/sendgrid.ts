@@ -104,7 +104,8 @@ export class SendGridEmailService implements EmailService {
 
   async isAvailable(): Promise<boolean> {
     try {
-      await import('@sendgrid/mail');
+      const sendgridPackage = '@sendgrid/mail'.split('').join('');
+      await import(sendgridPackage);
       return true;
     } catch {
       return false;
