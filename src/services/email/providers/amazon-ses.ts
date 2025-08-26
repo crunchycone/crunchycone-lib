@@ -106,4 +106,13 @@ export class AmazonSESEmailService implements EmailService {
       };
     }
   }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      await import('@aws-sdk/client-ses');
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

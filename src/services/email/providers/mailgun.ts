@@ -64,4 +64,8 @@ export class MailgunEmailService implements EmailService {
       };
     }
   }
+
+  async isAvailable(): Promise<boolean> {
+    return true; // Mailgun uses fetch which is built-in
+  }
 }

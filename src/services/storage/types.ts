@@ -17,6 +17,7 @@ export interface StorageProvider {
   findFileByExternalId(externalId: string): Promise<StorageFileInfo | null>;
   listFiles(options?: ListFilesOptions): Promise<ListFilesResult>;
   searchFiles(options: SearchFilesOptions): Promise<SearchFilesResult>;
+  isAvailable(): Promise<boolean>;
   
   // File visibility management
   setFileVisibility(key: string, visibility: 'public' | 'private'): Promise<FileVisibilityResult>;

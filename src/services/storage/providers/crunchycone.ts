@@ -1115,4 +1115,8 @@ export class CrunchyConeProvider implements StorageProvider {
       body: JSON.stringify({ metadata }),
     });
   }
+
+  async isAvailable(): Promise<boolean> {
+    return true; // CrunchyCone provider has no optional dependencies
+  }
 }

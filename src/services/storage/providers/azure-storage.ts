@@ -556,4 +556,13 @@ export class AzureStorageProvider implements StorageProvider {
       throw new Error(`Failed to generate SAS token: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      await import('@azure/storage-blob');
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

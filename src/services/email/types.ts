@@ -28,6 +28,7 @@ export interface EmailResponse {
 
 export interface EmailService {
   sendEmail(params: EmailParams): Promise<EmailResponse>;
+  isAvailable(): Promise<boolean>;
 }
 
 export interface EmailStatusResponse {

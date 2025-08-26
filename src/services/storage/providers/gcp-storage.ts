@@ -577,4 +577,13 @@ export class GCPStorageProvider implements StorageProvider {
     
     return this.getFileVisibility(fileInfo.key);
   }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      await import('@google-cloud/storage');
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

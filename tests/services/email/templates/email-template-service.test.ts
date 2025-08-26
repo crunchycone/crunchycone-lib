@@ -13,6 +13,10 @@ class MockEmailService implements EmailService {
     return { success: true, messageId: 'test-id-123' };
   }
 
+  async isAvailable(): Promise<boolean> {
+    return true; // Mock service is always available
+  }
+
   reset() {
     this.sentEmails = [];
   }

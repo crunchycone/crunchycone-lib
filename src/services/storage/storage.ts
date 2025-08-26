@@ -1,5 +1,6 @@
 import { 
   StorageProvider, 
+  StorageProviderType,
   StorageUploadOptions, 
   StorageUploadResult, 
   StorageFileInfo,
@@ -8,6 +9,10 @@ import {
   SearchFilesOptions,
   SearchFilesResult,
 } from './types';
+
+// Cache for provider availability to avoid repeated import attempts
+const availabilityCache = new Map<StorageProviderType, { available: boolean; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 let storageProvider: StorageProvider | null = null;
 
@@ -70,4 +75,85 @@ export async function listFiles(options?: ListFilesOptions): Promise<ListFilesRe
 export async function searchFiles(options: SearchFilesOptions): Promise<SearchFilesResult> {
   const provider = getStorageProvider();
   return provider.searchFiles(options);
+}
+
+/**
+ * Check if a specific storage provider is available (has required dependencies)
+ */
+export async function isStorageProviderAvailable(providerType: StorageProviderType): Promise<boolean> {
+  // Check cache first
+  const cached = availabilityCache.get(providerType);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.available;
+  }
+
+  let available: boolean;
+
+  switch (providerType) {
+    case 'localstorage':
+    case 'crunchycone':
+      // These providers have no optional dependencies
+      available = true;
+      break;
+
+    case 'aws':
+    case 's3':
+    case 'digitalocean':
+    case 'wasabi':
+    case 'backblaze':
+    case 'r2':
+    case 's3-custom':
+      try {
+        await import('@aws-sdk/client-s3');
+        available = true;
+      } catch {
+        available = false;
+      }
+      break;
+
+    case 'gcp':
+      try {
+        await import('@google-cloud/storage');
+        available = true;
+      } catch {
+        available = false;
+      }
+      break;
+
+    case 'azure':
+      try {
+        await import('@azure/storage-blob');
+        available = true;
+      } catch {
+        available = false;
+      }
+      break;
+
+    default:
+      available = false;
+  }
+
+  // Cache the result
+  availabilityCache.set(providerType, { available, timestamp: Date.now() });
+  
+  return available;
+}
+
+/**
+ * Get list of all available storage provider types
+ */
+export async function getAvailableStorageProviders(): Promise<StorageProviderType[]> {
+  const allProviders: StorageProviderType[] = [
+    'localstorage', 'crunchycone', 'aws', 's3', 'digitalocean', 
+    'wasabi', 'backblaze', 'r2', 's3-custom', 'gcp', 'azure'
+  ];
+  const availableProviders: StorageProviderType[] = [];
+
+  for (const provider of allProviders) {
+    if (await isStorageProviderAvailable(provider)) {
+      availableProviders.push(provider);
+    }
+  }
+
+  return availableProviders;
 }

@@ -52,4 +52,13 @@ export class ResendEmailService implements EmailService {
       };
     }
   }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      await import('resend');
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

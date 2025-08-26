@@ -1,6 +1,6 @@
 // Core types and factory (no optional dependencies)
 export { EmailService, EmailParams, EmailResponse, EmailProvider, EmailAddress, EmailRecipient } from './types';
-export { createEmailService, getEmailService } from './factory';
+export { createEmailService, getEmailService, isEmailProviderAvailable, getAvailableEmailProviders } from './factory';
 
 // Utilities (no optional dependencies)
 export { 

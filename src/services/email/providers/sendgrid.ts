@@ -101,6 +101,15 @@ export class SendGridEmailService implements EmailService {
       };
     }
   }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      await import('@sendgrid/mail');
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }
 
 export class SendGridProvider implements SendGridEmailProvider {

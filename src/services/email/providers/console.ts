@@ -78,4 +78,8 @@ export class ConsoleEmailService implements EmailService {
       };
     }
   }
+
+  async isAvailable(): Promise<boolean> {
+    return true; // Console provider has no dependencies
+  }
 }

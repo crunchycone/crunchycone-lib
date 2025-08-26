@@ -75,12 +75,7 @@ export class CrunchyConeEmailService implements EmailService {
   private configPromise: Promise<void>;
 
   constructor(config?: Partial<CrunchyConeEmailConfig>) {
-    // Validate API key is available before proceeding
-    if (!config?.apiKey && !process.env.CRUNCHYCONE_API_KEY) {
-      throw new Error('CrunchyCone API key is required. Set CRUNCHYCONE_API_KEY environment variable or pass apiKey in config.');
-    }
-    
-    // Initialize config asynchronously
+    // Initialize config asynchronously - will handle API key resolution with keytar fallback
     this.configPromise = this.initializeConfig(config);
   }
 
@@ -338,6 +333,10 @@ export class CrunchyConeEmailService implements EmailService {
       sentAt: data.sent_at ? new Date(data.sent_at) : undefined,
       deliveredAt: data.delivered_at ? new Date(data.delivered_at) : undefined,
     };
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return true; // CrunchyCone provider has no optional dependencies
   }
 
 }

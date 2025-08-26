@@ -1,5 +1,9 @@
 import { EmailService, EmailProvider } from './types';
 
+// Cache for provider availability to avoid repeated import attempts
+const availabilityCache = new Map<EmailProvider, { available: boolean; timestamp: number }>();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 export function createEmailService(provider?: EmailProvider): EmailService {
   const selectedProvider = (provider || process.env.CRUNCHYCONE_EMAIL_PROVIDER?.trim().toLowerCase() || 'console') as EmailProvider;
   
@@ -60,4 +64,82 @@ export function createEmailService(provider?: EmailProvider): EmailService {
 
 export function getEmailService(): EmailService {
   return createEmailService();
+}
+
+/**
+ * Check if a specific email provider is available (has required dependencies)
+ */
+export async function isEmailProviderAvailable(provider: EmailProvider): Promise<boolean> {
+  // Check cache first
+  const cached = availabilityCache.get(provider);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.available;
+  }
+
+  let available: boolean;
+
+  switch (provider) {
+    case 'console':
+    case 'smtp':
+    case 'crunchycone':
+      // These providers have no optional dependencies
+      available = true;
+      break;
+
+    case 'sendgrid':
+      try {
+        await import('@sendgrid/mail');
+        available = true;
+      } catch {
+        available = false;
+      }
+      break;
+
+    case 'resend':
+      try {
+        await import('resend');
+        available = true;
+      } catch {
+        available = false;
+      }
+      break;
+
+    case 'ses':
+      try {
+        await import('@aws-sdk/client-ses');
+        available = true;
+      } catch {
+        available = false;
+      }
+      break;
+
+    case 'mailgun':
+      // Mailgun uses fetch (built-in) so it's always available
+      available = true;
+      break;
+
+    default:
+      available = false;
+  }
+
+  // Cache the result
+  availabilityCache.set(provider, { available, timestamp: Date.now() });
+  
+  return available;
+}
+
+/**
+ * Get list of all available email providers
+ */
+export async function getAvailableEmailProviders(): Promise<EmailProvider[]> {
+  const allProviders: EmailProvider[] = ['console', 'smtp', 'crunchycone', 'sendgrid', 'resend', 'ses', 'mailgun'];
+  const availableProviders: EmailProvider[] = [];
+
+  for (const provider of allProviders) {
+    if (await isEmailProviderAvailable(provider)) {
+      availableProviders.push(provider);
+    }
+  }
+
+  return availableProviders;
 }

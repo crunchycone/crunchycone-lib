@@ -58,4 +58,8 @@ export class SMTPEmailService implements EmailService {
       };
     }
   }
+
+  async isAvailable(): Promise<boolean> {
+    return true; // SMTP provider has no optional dependencies
+  }
 }

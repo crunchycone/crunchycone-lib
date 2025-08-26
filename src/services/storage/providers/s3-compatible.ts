@@ -506,4 +506,13 @@ export class S3CompatibleProvider implements StorageProvider {
       return `https://${this.config.bucket}.s3.${this.config.region}.amazonaws.com/${key}`;
     }
   }
+
+  async isAvailable(): Promise<boolean> {
+    try {
+      await import('@aws-sdk/client-s3');
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

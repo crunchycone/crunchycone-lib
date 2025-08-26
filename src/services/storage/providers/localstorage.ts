@@ -730,4 +730,8 @@ export class LocalStorageProvider implements StorageProvider {
     
     return this.getFileVisibility(fileInfo.key);
   }
+
+  async isAvailable(): Promise<boolean> {
+    return true; // Local storage has no optional dependencies
+  }
 }
