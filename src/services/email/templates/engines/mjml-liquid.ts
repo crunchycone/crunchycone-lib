@@ -66,28 +66,33 @@ export class MJMLLiquidEngine implements EmailTemplateEngine {
 
   private createCustomFileSystem() {
     return {
-      readFile: async (includeFile: string): Promise<string> => {
-        return await this.templateProvider.readIncludeFile(includeFile, this.currentLanguage);
+      readFile: async (filepath: string): Promise<string> => {
+        return await this.templateProvider.readIncludeFile(filepath, this.currentLanguage);
       },
-      readFileSync: (includeFile: string): string => {
+      readFileSync: (filepath: string): string => {
         throw new Error('Synchronous file reading not supported. Use async rendering.');
       },
-      exists: async (includeFile: string): Promise<boolean> => {
-        return await this.templateProvider.includeExists(includeFile, this.currentLanguage)
+      exists: async (filepath: string): Promise<boolean> => {
+        return await this.templateProvider.includeExists(filepath, this.currentLanguage)
           .catch(() => false);
       },
-      existsSync: (includeFile: string): boolean => {
-        // For now, return true and let the async version handle the actual check
+      existsSync: (filepath: string): boolean => {
+        // Return true optimistically - async version handles the actual check
         return true;
       },
-      resolve: (root: string, file: string): string => {
-        // Just return the filename as-is since we're using template IDs  
+      resolve: (dir: string, file: string, ext: string): string => {
+        // Just return the filename as-is since we're using template IDs
+        // LiquidJS expects 3 parameters: dir, file, ext
         return file;
       },
+      contains: (root: string, file: string): boolean => {
+        // Always return true since we handle security through template provider
+        return true;
+      },
       sep: '/',
-      dirname: (path: string) => '',
-      extname: (path: string) => '',
-      isAbsolute: () => false
+      dirname: (filepath: string): string => {
+        return '';
+      }
     };
   }
 
