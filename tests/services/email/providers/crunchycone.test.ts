@@ -350,7 +350,7 @@ describe('CrunchyCone Email Service', () => {
       const expectedResult = {
         emails: [
           { emailId: 'email-1' },
-          { emailId: 'email-2' }
+          { emailId: 'email-2' },
         ],
         totalCount: 2,
         hasMore: false,

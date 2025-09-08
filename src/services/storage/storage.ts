@@ -148,7 +148,7 @@ export async function isStorageProviderAvailable(providerType: StorageProviderTy
 export async function getAvailableStorageProviders(): Promise<StorageProviderType[]> {
   const allProviders: StorageProviderType[] = [
     'localstorage', 'crunchycone', 'aws', 's3', 'digitalocean', 
-    'wasabi', 'backblaze', 'r2', 's3-custom', 'gcp', 'azure'
+    'wasabi', 'backblaze', 'r2', 's3-custom', 'gcp', 'azure',
   ];
   const availableProviders: StorageProviderType[] = [];
 

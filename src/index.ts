@@ -39,6 +39,43 @@ export {
 // Authentication utilities (no optional dependencies)
 export * from './auth';
 
+// CrunchyCone API and Authentication services
+export { 
+  CrunchyConeApiClient, 
+  validateApiKey, 
+  getCurrentUser, 
+  getProjectInfo,
+  type CrunchyConeApiConfig,
+  type CrunchyConeUser,
+  type CrunchyConeProject,
+  type CrunchyConeApiResponse,
+  type CrunchyConeAuthResponse,
+} from './services/crunchycone-api';
+export { 
+  createCrunchyConeAuthService, 
+  checkCrunchyConeAuth, 
+  CrunchyConeAuthService,
+  type CrunchyConeAuthResult,
+  type CrunchyConeAuthServiceConfig,
+} from './services/crunchycone-auth';
+
+// CrunchyCone Environment and Secrets Management
+export {
+  CrunchyConeEnvironmentService,
+  createCrunchyConeEnvironmentService,
+  getCrunchyConeEnvironmentService,
+  isPlatformEnvironment,
+  getProviderType,
+  LocalEnvironmentProvider,
+  RemoteEnvironmentProvider,
+  type EnvironmentProvider,
+  type EnvironmentServiceConfig,
+  type EnvironmentOperationResult,
+  type EnvironmentVariablesUpdate,
+  type SecretsUpdate,
+  type ProviderType,
+} from './services/environment';
+
 // Note: Storage services and individual email/storage providers are available via modular imports:
 // - import { StorageService } from 'crunchycone-lib/storage'
 // - import { AmazonSESEmailService } from 'crunchycone-lib/email/providers/amazon-ses'

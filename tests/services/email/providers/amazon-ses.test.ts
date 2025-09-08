@@ -33,7 +33,7 @@ describe('Amazon SES Email Service', () => {
       const response = await service.sendEmail({
         to: 'test@example.com',
         subject: 'Test',
-        textBody: 'Test'
+        textBody: 'Test',
       });
       
       expect(response.success).toBe(false);
@@ -47,7 +47,7 @@ describe('Amazon SES Email Service', () => {
       const response = await service.sendEmail({
         to: 'test@example.com',
         subject: 'Test',
-        textBody: 'Test'
+        textBody: 'Test',
       });
       
       expect(response.success).toBe(false);
@@ -61,7 +61,7 @@ describe('Amazon SES Email Service', () => {
       const response = await service.sendEmail({
         to: 'test@example.com',
         subject: 'Test',
-        textBody: 'Test'
+        textBody: 'Test',
       });
       
       expect(response.success).toBe(false);

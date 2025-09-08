@@ -1,8 +1,5 @@
 import { createEmailService } from '../../../src/services/email/factory';
 import { AmazonSESEmailService } from '../../../src/services/email/providers/amazon-ses';
-import { SendGridEmailService } from '../../../src/services/email/providers/sendgrid';
-import { ResendEmailService } from '../../../src/services/email/providers/resend';
-import { MailgunEmailService } from '../../../src/services/email/providers/mailgun';
 import { testEmailParams, setEnvVars, expectErrorResponse } from './shared/test-helpers';
 
 // Mock all external dependencies

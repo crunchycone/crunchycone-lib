@@ -26,10 +26,13 @@ A comprehensive TypeScript library providing unified abstractions for email serv
 - **Public/private file visibility** controls
 - **External ID mapping** for easy integration
 
-### 🛡️ Authentication
-- **CrunchyCone Auth** integration with keychain support (keytar)
-- **Environment variable** fallbacks
-- **API key management** utilities
+### 🛡️ Authentication & API Client
+- **API-first authentication** with CLI fallback for CrunchyCone services
+- **CrunchyCone API Client** for direct API access (user info, project details)
+- **Unified auth service** supporting multiple authentication methods
+- **Environment variable** and **keychain** support (keytar)
+- **CLI fallback** via `crunchycone-cli auth check`
+- **Production-ready** authentication for containerized environments
 
 ## 📦 Installation
 
@@ -180,6 +183,7 @@ templates/email/
 
 ## 📚 Documentation
 
+- **[CrunchyCone API & Auth](docs/CRUNCHYCONE_API_AUTH.md)** - API client and unified authentication service
 - **[Email Providers](docs/EMAIL_PROVIDERS.md)** - Complete guide to all supported email providers
 - **[Email Templates](docs/EMAIL_TEMPLATES.md)** - MJML v4 + LiquidJS templating with includes
 - **[Storage Providers](docs/STORAGE.md)** - File storage across multiple cloud providers

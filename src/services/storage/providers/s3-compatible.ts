@@ -23,7 +23,7 @@ export class S3CompatibleProvider implements StorageProvider {
       const presignerPackage = '@aws-sdk/s3-request-presigner'.split('').join('');
       const [s3Module, presignerModule] = await Promise.all([
         import(s3Package),
-        import(presignerPackage)
+        import(presignerPackage),
       ]);
 
       this.awsSDK = {
@@ -57,7 +57,7 @@ export class S3CompatibleProvider implements StorageProvider {
           'AWS SDK not found. Please install it with:\n' +
           'npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner\n' +
           'or\n' +
-          'yarn add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner'
+          'yarn add @aws-sdk/client-s3 @aws-sdk/s3-request-presigner',
         );
       }
       throw error;

@@ -103,7 +103,7 @@ describe('Provider Availability Checking', () => {
       const crunchyConeStorage = new CrunchyConeProvider({
         apiKey: 'test-key',
         apiUrl: 'https://test.example.com',
-        projectId: 'test-project'
+        projectId: 'test-project',
       });
       expect(await crunchyConeStorage.isAvailable()).toBe(true);
     });

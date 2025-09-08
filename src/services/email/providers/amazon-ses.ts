@@ -31,7 +31,7 @@ export class AmazonSESEmailService implements EmailService {
         '- CRUNCHYCONE_AWS_ACCESS_KEY_ID: Your AWS access key ID\n' +
         '- CRUNCHYCONE_AWS_SECRET_ACCESS_KEY: Your AWS secret access key\n' +
         '- CRUNCHYCONE_SES_FROM: The sender email address\n' +
-        '- CRUNCHYCONE_AWS_REGION: AWS region (optional, defaults to us-east-1)'
+        '- CRUNCHYCONE_AWS_REGION: AWS region (optional, defaults to us-east-1)',
       );
     }
 

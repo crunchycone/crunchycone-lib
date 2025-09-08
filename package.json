@@ -1,6 +1,6 @@
 {
   "name": "crunchycone-lib",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "TypeScript library providing abstractions for CrunchyCone Starter Projects",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -107,6 +107,11 @@
       "import": "./dist/api-external/index.js",
       "require": "./dist/api-external/index.js",
       "types": "./dist/api-external/index.d.ts"
+    },
+    "./environment": {
+      "import": "./dist/services/environment/index.js",
+      "require": "./dist/services/environment/index.js",
+      "types": "./dist/services/environment/index.d.ts"
     }
   },
   "scripts": {

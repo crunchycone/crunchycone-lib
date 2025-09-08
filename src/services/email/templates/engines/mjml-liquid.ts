@@ -69,30 +69,30 @@ export class MJMLLiquidEngine implements EmailTemplateEngine {
       readFile: async (filepath: string): Promise<string> => {
         return await this.templateProvider.readIncludeFile(filepath, this.currentLanguage);
       },
-      readFileSync: (filepath: string): string => {
+      readFileSync: (_filepath: string): string => {
         throw new Error('Synchronous file reading not supported. Use async rendering.');
       },
       exists: async (filepath: string): Promise<boolean> => {
         return await this.templateProvider.includeExists(filepath, this.currentLanguage)
           .catch(() => false);
       },
-      existsSync: (filepath: string): boolean => {
+      existsSync: (_filepath: string): boolean => {
         // Return true optimistically - async version handles the actual check
         return true;
       },
-      resolve: (dir: string, file: string, ext: string): string => {
+      resolve: (_dir: string, file: string, _ext: string): string => {
         // Just return the filename as-is since we're using template IDs
         // LiquidJS expects 3 parameters: dir, file, ext
         return file;
       },
-      contains: (root: string, file: string): boolean => {
+      contains: (_root: string, _file: string): boolean => {
         // Always return true since we handle security through template provider
         return true;
       },
       sep: '/',
-      dirname: (filepath: string): string => {
+      dirname: (_filepath: string): string => {
         return '';
-      }
+      },
     };
   }
 
