@@ -34,6 +34,14 @@ A comprehensive TypeScript library providing unified abstractions for email serv
 - **CLI fallback** via `crunchycone-cli auth check`
 - **Production-ready** authentication for containerized environments
 
+### 🌍 Environment & Secrets Management
+- **Unified environment management** across local development and CrunchyCone platform
+- **Automatic provider detection** via `CRUNCHYCONE_PLATFORM=1` environment variable
+- **Local .env file management** with proper parsing, escaping, and serialization
+- **Remote secrets management** via CrunchyCone API (write-only for security)
+- **Environment variables** supported in both local and platform environments
+- **Bulk operations** for efficient variable/secrets management
+
 ## 📦 Installation
 
 ```bash
@@ -169,6 +177,47 @@ await emailService.sendEmail({
 });
 ```
 
+### Environment & Secrets Management
+
+The environment service automatically detects your runtime environment and provides the appropriate functionality:
+
+```typescript
+import { getCrunchyConeEnvironmentService, isPlatformEnvironment } from 'crunchycone-lib';
+
+const envService = getCrunchyConeEnvironmentService();
+
+// Check environment
+console.log('Platform environment:', isPlatformEnvironment()); // true if CRUNCHYCONE_PLATFORM=1
+
+// Environment variables (works locally and in platform)
+await envService.setEnvVar('DATABASE_URL', 'postgres://localhost/myapp');
+const dbUrl = await envService.getEnvVar('DATABASE_URL');
+
+// List all environment variables
+const allVars = await envService.listEnvVars();
+
+// Bulk operations
+await envService.setEnvVars({
+  API_TIMEOUT: '30000',
+  DEBUG_MODE: 'true',
+  APP_NAME: 'MyApp'
+});
+
+// Secrets (only works in platform environment)
+if (envService.supportsSecrets()) {
+  await envService.setSecret('JWT_SECRET', 'your-secret-key');
+  await envService.setSecret('API_TOKEN', 'secret-api-token');
+  
+  // List secret names (values are never returned for security)
+  const secretNames = await envService.listSecretNames();
+  console.log('Available secrets:', secretNames); // ['JWT_SECRET', 'API_TOKEN']
+}
+```
+
+**Environment Detection:**
+- **Local Development** (default): Manages `.env` files, secrets operations are no-ops
+- **Platform Environment** (`CRUNCHYCONE_PLATFORM=1`): Uses CrunchyCone API for both env vars and secrets
+
 **Template Structure with Includes:**
 ```
 templates/email/
@@ -184,6 +233,7 @@ templates/email/
 ## 📚 Documentation
 
 - **[CrunchyCone API & Auth](docs/CRUNCHYCONE_API_AUTH.md)** - API client and unified authentication service
+- **[Environment & Secrets Management](docs/ENVIRONMENT_SECRETS.md)** - Unified env vars and secrets across environments
 - **[Email Providers](docs/EMAIL_PROVIDERS.md)** - Complete guide to all supported email providers
 - **[Email Templates](docs/EMAIL_TEMPLATES.md)** - MJML v4 + LiquidJS templating with includes
 - **[Storage Providers](docs/STORAGE.md)** - File storage across multiple cloud providers
@@ -194,6 +244,17 @@ templates/email/
 ## 🔐 Environment Variables
 
 The library uses environment variables for configuration. Here are the key ones:
+
+### Environment & Secrets Management
+```bash
+# Platform Detection
+CRUNCHYCONE_PLATFORM=1                # Enables CrunchyCone platform mode (uses API)
+
+# CrunchyCone API (required for platform mode)
+CRUNCHYCONE_API_KEY=your_api_key      # API key for CrunchyCone services
+CRUNCHYCONE_PROJECT_ID=your_project   # Project ID for environment/secrets API
+CRUNCHYCONE_API_URL=https://api.crunchycone.com  # Optional: custom API URL
+```
 
 ### Email Services
 ```bash
@@ -229,7 +290,7 @@ The library is organized into focused modules with **zero optional dependencies*
 
 ```typescript
 // Core exports (no optional dependencies)
-import { createEmailService, EmailService, isEmailProviderAvailable, getAvailableEmailProviders } from 'crunchycone-lib';
+import { createEmailService, EmailService, isEmailProviderAvailable, getAvailableEmailProviders, getCrunchyConeEnvironmentService, isPlatformEnvironment } from 'crunchycone-lib';
 
 // Email services (no optional dependencies) 
 import { createEmailService, isEmailProviderAvailable, getAvailableEmailProviders } from 'crunchycone-lib/email';
@@ -242,6 +303,9 @@ import { StorageService, isStorageProviderAvailable, getAvailableStorageProvider
 
 // Authentication utilities (no optional dependencies)
 import { getCrunchyConeAPIKey } from 'crunchycone-lib/auth';
+
+// Environment & Secrets Management (no optional dependencies)
+import { getCrunchyConeEnvironmentService, isPlatformEnvironment } from 'crunchycone-lib/environment';
 
 // Specific providers (only loads when imported)
 import { AmazonSESEmailService } from 'crunchycone-lib/email/providers/amazon-ses';
