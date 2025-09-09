@@ -53,7 +53,11 @@ export class CrunchyConeEnvironmentService implements EnvironmentProvider {
     }
     
     // Detect based on CRUNCHYCONE_PLATFORM environment variable at construction time
-    return process.env.CRUNCHYCONE_PLATFORM === '1';
+    return this.isValidPlatformValue(process.env.CRUNCHYCONE_PLATFORM);
+  }
+
+  private isValidPlatformValue(value: string | undefined): boolean {
+    return value === '1' || value === 'true';
   }
 
   /**
@@ -220,7 +224,8 @@ export function getCrunchyConeEnvironmentService(config?: EnvironmentServiceConf
  * @returns true if CRUNCHYCONE_PLATFORM=1, false otherwise
  */
 export function isPlatformEnvironment(): boolean {
-  return process.env.CRUNCHYCONE_PLATFORM === '1';
+  const value = process.env.CRUNCHYCONE_PLATFORM;
+  return value === '1' || value === 'true';
 }
 
 /**

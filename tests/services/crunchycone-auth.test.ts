@@ -449,6 +449,25 @@ describe('CrunchyConeAuthService', () => {
         expect(mockSpawn).not.toHaveBeenCalled();
       });
 
+      test('should detect platform mode with CRUNCHYCONE_PLATFORM=true', async () => {
+        // Set platform mode with 'true' value
+        process.env.CRUNCHYCONE_PLATFORM = 'true';
+        delete process.env.CRUNCHYCONE_API_KEY;
+
+        const service = new CrunchyConeAuthService();
+        const result = await service.checkAuthentication();
+
+        expect(result).toEqual({
+          success: false,
+          source: 'api',
+          error: 'No API key found in platform mode. Please set CRUNCHYCONE_API_KEY environment variable.',
+        });
+
+        // Should never call keychain or spawn in platform mode
+        expect(mockGetCrunchyConeAPIKeyWithFallback).not.toHaveBeenCalled();
+        expect(mockSpawn).not.toHaveBeenCalled();
+      });
+
       test('should fallback to keychain then CLI in local development mode', async () => {
         // Ensure we're not in platform mode
         delete process.env.CRUNCHYCONE_PLATFORM;

@@ -47,12 +47,12 @@ describe('CrunchyCone Environment Service', () => {
       expect(getProviderType()).toBe('local');
     });
 
-    test('should detect local environment when CRUNCHYCONE_PLATFORM is not "1"', () => {
+    test('should detect local environment when CRUNCHYCONE_PLATFORM is not "1" or "true"', () => {
       process.env.CRUNCHYCONE_PLATFORM = '0';
       expect(isPlatformEnvironment()).toBe(false);
       expect(getProviderType()).toBe('local');
 
-      process.env.CRUNCHYCONE_PLATFORM = 'true';
+      process.env.CRUNCHYCONE_PLATFORM = 'false';
       expect(isPlatformEnvironment()).toBe(false);
       expect(getProviderType()).toBe('local');
 
@@ -63,6 +63,12 @@ describe('CrunchyCone Environment Service', () => {
 
     test('should detect platform environment when CRUNCHYCONE_PLATFORM=1', () => {
       process.env.CRUNCHYCONE_PLATFORM = '1';
+      expect(isPlatformEnvironment()).toBe(true);
+      expect(getProviderType()).toBe('remote');
+    });
+
+    test('should detect platform environment when CRUNCHYCONE_PLATFORM=true', () => {
+      process.env.CRUNCHYCONE_PLATFORM = 'true';
       expect(isPlatformEnvironment()).toBe(true);
       expect(getProviderType()).toBe('remote');
     });

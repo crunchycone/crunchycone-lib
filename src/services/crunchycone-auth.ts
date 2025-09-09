@@ -67,7 +67,7 @@ export class CrunchyConeAuthService {
    * @returns Promise with authentication result
    */
   async checkAuthentication(): Promise<CrunchyConeAuthResult> {
-    const isPlatformMode = process.env.CRUNCHYCONE_PLATFORM === '1';
+    const isPlatformMode = this.isValidPlatformValue(process.env.CRUNCHYCONE_PLATFORM);
     
     // 1. Always check environment variable first (both platform and local mode)
     const envApiKey = process.env.CRUNCHYCONE_API_KEY;
@@ -188,6 +188,14 @@ export class CrunchyConeAuthService {
         error: `CLI authentication failed: ${errorMessage}`,
       };
     }
+  }
+
+  /**
+   * Check if a value represents platform mode
+   * @private
+   */
+  private isValidPlatformValue(value: string | undefined): boolean {
+    return value === '1' || value === 'true';
   }
 
   /**
