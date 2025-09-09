@@ -150,7 +150,19 @@ export class CrunchyConeAuthService {
       // Keychain access failed, continue to CLI fallback
     }
 
-    // 3. Fallback to CLI approach
+    // 3. Fallback to CLI approach (only in local development mode)
+    const isPlatformMode = process.env.CRUNCHYCONE_PLATFORM === '1';
+    
+    if (isPlatformMode) {
+      // In platform mode, we should never fall back to CLI
+      return {
+        success: false,
+        source: 'api',
+        error: 'No valid API key found in platform mode. Please set CRUNCHYCONE_API_KEY environment variable.',
+      };
+    }
+    
+    // Only use CLI fallback in local development mode
     try {
       const cliResult = await this.executeCliAuthCheck();
       return {
@@ -196,7 +208,6 @@ export class CrunchyConeAuthService {
     return new Promise((resolve, reject) => {
       const child = spawn('npx', ['crunchycone-cli', 'auth', 'check', '-j'], {
         stdio: ['ignore', 'pipe', 'pipe'],
-        timeout: this.config.cliTimeout,
       });
 
       let stdout = '';
@@ -210,15 +221,17 @@ export class CrunchyConeAuthService {
         stderr += data.toString();
       });
 
-      child.on('error', (error) => {
-        if (error.message.includes('ENOENT')) {
-          reject(new Error('crunchycone-cli not found. Please install it with: npm install -g crunchycone-cli'));
-        } else {
-          reject(new Error(`Failed to execute CLI command: ${error.message}`));
+      // Set up timeout
+      const timeoutId = setTimeout(() => {
+        if (!child.killed) {
+          child.kill('SIGTERM');
+          reject(new Error(`CLI command timeout after ${this.config.cliTimeout}ms`));
         }
-      });
+      }, this.config.cliTimeout);
 
       child.on('close', (code) => {
+        clearTimeout(timeoutId);
+        
         if (code === 0) {
           try {
             const result = JSON.parse(stdout.trim()) as CrunchyConeCliAuthResponse;
@@ -245,11 +258,15 @@ export class CrunchyConeAuthService {
         }
       });
 
-      // Set up timeout
-      setTimeout(() => {
-        child.kill('SIGTERM');
-        reject(new Error(`CLI command timeout after ${this.config.cliTimeout}ms`));
-      }, this.config.cliTimeout);
+      child.on('error', (error) => {
+        clearTimeout(timeoutId);
+        
+        if (error.message.includes('ENOENT')) {
+          reject(new Error('crunchycone-cli not found. Please install it with: npm install -g crunchycone-cli'));
+        } else {
+          reject(new Error(`Failed to execute CLI command: ${error.message}`));
+        }
+      });
     });
   }
 }

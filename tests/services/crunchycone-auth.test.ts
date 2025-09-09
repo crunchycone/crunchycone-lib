@@ -406,6 +406,68 @@ describe('CrunchyConeAuthService', () => {
         expect(result.source).toBe('cli');
       });
     });
+
+    describe('Platform Mode Behavior', () => {
+      test('should not fallback to CLI in platform mode when no API key found', async () => {
+        // Set platform mode
+        process.env.CRUNCHYCONE_PLATFORM = '1';
+        delete process.env.CRUNCHYCONE_API_KEY;
+        
+        // Make keychain fail as well
+        mockGetCrunchyConeAPIKeyWithFallback.mockRejectedValue(new Error('No keychain access'));
+
+        const service = new CrunchyConeAuthService();
+        const result = await service.checkAuthentication();
+
+        expect(result).toEqual({
+          success: false,
+          source: 'api',
+          error: 'No valid API key found in platform mode. Please set CRUNCHYCONE_API_KEY environment variable.',
+        });
+
+        // Should never call spawn in platform mode
+        expect(mockSpawn).not.toHaveBeenCalled();
+      });
+
+      test('should fallback to CLI in local development mode (not platform mode)', async () => {
+        // Ensure we're not in platform mode
+        delete process.env.CRUNCHYCONE_PLATFORM;
+        delete process.env.CRUNCHYCONE_API_KEY;
+        
+        // Make keychain fail
+        mockGetCrunchyConeAPIKeyWithFallback.mockRejectedValue(new Error('No keychain access'));
+
+        // Mock CLI success
+        const mockChild = new EventEmitter() as any;
+        mockChild.stdout = new EventEmitter();
+        mockChild.stderr = new EventEmitter();
+        mockSpawn.mockReturnValue(mockChild);
+
+        const service = new CrunchyConeAuthService();
+        const authPromise = service.checkAuthentication();
+
+        // Simulate CLI response
+        setTimeout(() => {
+          mockChild.stdout.emit('data', JSON.stringify({
+            success: true,
+            user: { id: 'user-123', email: 'test@example.com', name: 'Test' },
+          }));
+          mockChild.emit('close', 0);
+        }, 10);
+
+        const result = await authPromise;
+
+        expect(result.success).toBe(true);
+        expect(result.source).toBe('cli');
+        
+        // Should call spawn in local development mode
+        expect(mockSpawn).toHaveBeenCalledWith(
+          'npx',
+          ['crunchycone-cli', 'auth', 'check', '-j'],
+          expect.any(Object),
+        );
+      });
+    });
   });
 });
 

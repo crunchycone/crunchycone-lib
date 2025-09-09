@@ -54,7 +54,7 @@ describe('CrunchyCone Email Service', () => {
       const result = await service.sendEmail({
         to: 'test@example.com',
         subject: 'Test',
-        textBody: 'Test'
+        textBody: 'Test',
       });
       
       expect(result.success).toBe(false);
