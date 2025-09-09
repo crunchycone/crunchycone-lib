@@ -449,7 +449,7 @@ describe('CrunchyConeAuthService', () => {
         expect(mockSpawn).not.toHaveBeenCalled();
       });
 
-      test('should fallback to CLI in local development mode (not platform mode)', async () => {
+      test('should fallback to keychain then CLI in local development mode', async () => {
         // Ensure we're not in platform mode
         delete process.env.CRUNCHYCONE_PLATFORM;
         delete process.env.CRUNCHYCONE_API_KEY;
@@ -480,12 +480,37 @@ describe('CrunchyConeAuthService', () => {
         expect(result.success).toBe(true);
         expect(result.source).toBe('cli');
         
-        // Should call spawn in local development mode
+        // Should try keychain first, then fall back to CLI in local development mode
+        expect(mockGetCrunchyConeAPIKeyWithFallback).toHaveBeenCalled();
         expect(mockSpawn).toHaveBeenCalledWith(
           'npx',
           ['crunchycone-cli', 'auth', 'check', '-j'],
           expect.any(Object),
         );
+      });
+
+      test('should use keychain in local development mode when available', async () => {
+        // Ensure we're not in platform mode
+        delete process.env.CRUNCHYCONE_PLATFORM;
+        delete process.env.CRUNCHYCONE_API_KEY;
+        
+        // Mock successful keychain access
+        const mockUser = { id: 'user-123', email: 'test@example.com', name: 'Test' };
+        mockGetCrunchyConeAPIKeyWithFallback.mockResolvedValue('keychain-api-key');
+        mockGetCurrentUser.mockResolvedValue(mockUser);
+        mockGetProjectInfo.mockResolvedValue(null);
+
+        const service = new CrunchyConeAuthService();
+        const result = await service.checkAuthentication();
+
+        expect(result.success).toBe(true);
+        expect(result.source).toBe('api');
+        expect(result.message).toBe('Authenticated via API key from keychain');
+        
+        // Should try keychain and succeed, never call CLI
+        expect(mockGetCrunchyConeAPIKeyWithFallback).toHaveBeenCalled();
+        expect(mockGetCurrentUser).toHaveBeenCalledWith('keychain-api-key');
+        expect(mockSpawn).not.toHaveBeenCalled();
       });
     });
   });

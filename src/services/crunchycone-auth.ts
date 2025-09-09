@@ -69,54 +69,50 @@ export class CrunchyConeAuthService {
   async checkAuthentication(): Promise<CrunchyConeAuthResult> {
     const isPlatformMode = process.env.CRUNCHYCONE_PLATFORM === '1';
     
-    // 1. Check if CRUNCHYCONE_API_KEY exists and try API first
-    try {
-      const envApiKey = process.env.CRUNCHYCONE_API_KEY;
-      if (envApiKey && envApiKey.trim()) {
-        try {
-          const user = await validateApiKey(envApiKey);
-          const project = await this.getProjectInfoSafely(envApiKey);
-          
+    // 1. Always check environment variable first (both platform and local mode)
+    const envApiKey = process.env.CRUNCHYCONE_API_KEY;
+    if (envApiKey && envApiKey.trim()) {
+      try {
+        const user = await validateApiKey(envApiKey);
+        const project = await this.getProjectInfoSafely(envApiKey);
+        
+        return {
+          success: true,
+          source: 'api',
+          user: {
+            email: user.email,
+            name: user.name,
+            id: user.id,
+          },
+          project: project ? {
+            project_id: project.project_id,
+            name: project.name,
+          } : undefined,
+          message: 'Authenticated via API key',
+        };
+      } catch (apiError) {
+        const errorMessage = apiError instanceof Error ? apiError.message : 'Unknown API error';
+        
+        // In platform mode, fail immediately if env API key is invalid
+        if (isPlatformMode) {
           return {
-            success: true,
+            success: false,
             source: 'api',
-            user: {
-              email: user.email,
-              name: user.name,
-              id: user.id,
-            },
-            project: project ? {
-              project_id: project.project_id,
-              name: project.name,
-            } : undefined,
-            message: 'Authenticated via API key',
+            error: `API authentication failed in platform mode: ${errorMessage}`,
           };
-        } catch (apiError) {
-          const errorMessage = apiError instanceof Error ? apiError.message : 'Unknown API error';
-          
-          // In platform mode, fail immediately if env API key is invalid
-          if (isPlatformMode) {
-            return {
-              success: false,
-              source: 'api',
-              error: `API authentication failed in platform mode: ${errorMessage}`,
-            };
-          }
-          
-          // In local mode, if it's clearly an invalid key error, don't try keychain
-          if (errorMessage.includes('Invalid API key') || errorMessage.includes('401')) {
-            return {
-              success: false,
-              source: 'api',
-              error: `API authentication failed: ${errorMessage}`,
-            };
-          }
-          
-          // For other errors (network, timeout) in local mode, continue to keychain attempt
         }
+        
+        // In local mode, if it's clearly an invalid key error, don't try fallbacks
+        if (errorMessage.includes('Invalid API key') || errorMessage.includes('401')) {
+          return {
+            success: false,
+            source: 'api',
+            error: `API authentication failed: ${errorMessage}`,
+          };
+        }
+        
+        // For other errors (network, timeout) in local mode, continue to fallbacks
       }
-    } catch (_error) {
-      // Continue to next method
     }
 
     // In platform mode, if no environment API key was found, fail immediately
@@ -128,7 +124,7 @@ export class CrunchyConeAuthService {
       };
     }
 
-    // 2. Try to get API key from keychain and use API (local development mode only)
+    // 2. Local development mode only: Try keychain first
     try {
       const keychainApiKey = await getCrunchyConeAPIKeyWithFallback();
       if (keychainApiKey) {
@@ -151,7 +147,7 @@ export class CrunchyConeAuthService {
             message: 'Authenticated via API key from keychain',
           };
         } catch (apiError) {
-          // API failed, fall back to CLI
+          // API failed with keychain key, fall back to CLI
           const errorMessage = apiError instanceof Error ? apiError.message : 'Unknown API error';
           
           // If it's clearly an invalid key error, don't try CLI
@@ -162,6 +158,8 @@ export class CrunchyConeAuthService {
               error: `API authentication failed: ${errorMessage}`,
             };
           }
+          
+          // For other errors (network, timeout), continue to CLI fallback
         }
       }
     } catch (_error) {
