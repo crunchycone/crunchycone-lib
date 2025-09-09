@@ -408,13 +408,10 @@ describe('CrunchyConeAuthService', () => {
     });
 
     describe('Platform Mode Behavior', () => {
-      test('should not fallback to CLI in platform mode when no API key found', async () => {
+      test('should not fallback to keychain or CLI in platform mode when no API key found', async () => {
         // Set platform mode
         process.env.CRUNCHYCONE_PLATFORM = '1';
         delete process.env.CRUNCHYCONE_API_KEY;
-        
-        // Make keychain fail as well
-        mockGetCrunchyConeAPIKeyWithFallback.mockRejectedValue(new Error('No keychain access'));
 
         const service = new CrunchyConeAuthService();
         const result = await service.checkAuthentication();
@@ -422,10 +419,33 @@ describe('CrunchyConeAuthService', () => {
         expect(result).toEqual({
           success: false,
           source: 'api',
-          error: 'No valid API key found in platform mode. Please set CRUNCHYCONE_API_KEY environment variable.',
+          error: 'No API key found in platform mode. Please set CRUNCHYCONE_API_KEY environment variable.',
         });
 
-        // Should never call spawn in platform mode
+        // Should never call keychain or spawn in platform mode
+        expect(mockGetCrunchyConeAPIKeyWithFallback).not.toHaveBeenCalled();
+        expect(mockSpawn).not.toHaveBeenCalled();
+      });
+
+      test('should fail immediately in platform mode when env API key is invalid', async () => {
+        // Set platform mode
+        process.env.CRUNCHYCONE_PLATFORM = '1';
+        process.env.CRUNCHYCONE_API_KEY = 'invalid-key';
+        
+        // Mock API failure
+        mockValidateApiKey.mockRejectedValue(new Error('Invalid API key'));
+
+        const service = new CrunchyConeAuthService();
+        const result = await service.checkAuthentication();
+
+        expect(result).toEqual({
+          success: false,
+          source: 'api',
+          error: 'API authentication failed in platform mode: Invalid API key',
+        });
+
+        // Should never call keychain or spawn in platform mode
+        expect(mockGetCrunchyConeAPIKeyWithFallback).not.toHaveBeenCalled();
         expect(mockSpawn).not.toHaveBeenCalled();
       });
 

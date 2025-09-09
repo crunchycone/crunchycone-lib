@@ -67,6 +67,8 @@ export class CrunchyConeAuthService {
    * @returns Promise with authentication result
    */
   async checkAuthentication(): Promise<CrunchyConeAuthResult> {
+    const isPlatformMode = process.env.CRUNCHYCONE_PLATFORM === '1';
+    
     // 1. Check if CRUNCHYCONE_API_KEY exists and try API first
     try {
       const envApiKey = process.env.CRUNCHYCONE_API_KEY;
@@ -90,11 +92,18 @@ export class CrunchyConeAuthService {
             message: 'Authenticated via API key',
           };
         } catch (apiError) {
-          // API failed with environment key, but don't fallback yet
-          // Let the keychain API attempt happen first
           const errorMessage = apiError instanceof Error ? apiError.message : 'Unknown API error';
           
-          // If it's clearly an invalid key error, don't try keychain API
+          // In platform mode, fail immediately if env API key is invalid
+          if (isPlatformMode) {
+            return {
+              success: false,
+              source: 'api',
+              error: `API authentication failed in platform mode: ${errorMessage}`,
+            };
+          }
+          
+          // In local mode, if it's clearly an invalid key error, don't try keychain
           if (errorMessage.includes('Invalid API key') || errorMessage.includes('401')) {
             return {
               success: false,
@@ -103,14 +112,23 @@ export class CrunchyConeAuthService {
             };
           }
           
-          // For other errors (network, timeout), continue to keychain API attempt
+          // For other errors (network, timeout) in local mode, continue to keychain attempt
         }
       }
     } catch (_error) {
       // Continue to next method
     }
 
-    // 2. Try to get API key from keychain and use API
+    // In platform mode, if no environment API key was found, fail immediately
+    if (isPlatformMode) {
+      return {
+        success: false,
+        source: 'api',
+        error: 'No API key found in platform mode. Please set CRUNCHYCONE_API_KEY environment variable.',
+      };
+    }
+
+    // 2. Try to get API key from keychain and use API (local development mode only)
     try {
       const keychainApiKey = await getCrunchyConeAPIKeyWithFallback();
       if (keychainApiKey) {
@@ -151,16 +169,7 @@ export class CrunchyConeAuthService {
     }
 
     // 3. Fallback to CLI approach (only in local development mode)
-    const isPlatformMode = process.env.CRUNCHYCONE_PLATFORM === '1';
-    
-    if (isPlatformMode) {
-      // In platform mode, we should never fall back to CLI
-      return {
-        success: false,
-        source: 'api',
-        error: 'No valid API key found in platform mode. Please set CRUNCHYCONE_API_KEY environment variable.',
-      };
-    }
+    // Note: isPlatformMode already declared at the top of the function
     
     // Only use CLI fallback in local development mode
     try {
