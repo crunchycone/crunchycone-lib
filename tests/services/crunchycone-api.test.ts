@@ -101,7 +101,7 @@ describe('CrunchyConeApiClient', () => {
       
       expect(result).toEqual(mockUser);
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockBaseUrl}/auth/me`,
+        `${mockBaseUrl}/api/v1/auth/validate`,
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -134,7 +134,7 @@ describe('CrunchyConeApiClient', () => {
       await client.validateApiKey(undefined, customUrl);
       
       expect(mockFetch).toHaveBeenCalledWith(
-        `${customUrl}/auth/me`,
+        `${customUrl}/api/v1/auth/validate`,
         expect.any(Object),
       );
     });
@@ -244,7 +244,7 @@ describe('CrunchyConeApiClient', () => {
       
       expect(result).toEqual(mockProject);
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockBaseUrl}/projects/project-123`,
+        `${mockBaseUrl}/api/v1/users/me/projects/project-123`,
         expect.objectContaining({
           method: 'GET',
           headers: expect.objectContaining({
@@ -260,7 +260,7 @@ describe('CrunchyConeApiClient', () => {
       await client.getProjectInfo(mockApiKey, 'project-123', customUrl);
       
       expect(mockFetch).toHaveBeenCalledWith(
-        `${customUrl}/projects/project-123`,
+        `${customUrl}/api/v1/users/me/projects/project-123`,
         expect.any(Object),
       );
     });
@@ -312,7 +312,7 @@ describe('Standalone Functions', () => {
       
       expect(result.email).toBe('test@example.com');
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/auth/me`,
+        `${mockApiUrl}/api/v1/auth/validate`,
         expect.any(Object),
       );
     });
@@ -323,7 +323,7 @@ describe('Standalone Functions', () => {
       await validateApiKey(mockApiKey, customUrl);
       
       expect(mockFetch).toHaveBeenCalledWith(
-        `${customUrl}/auth/me`,
+        `${customUrl}/api/v1/auth/validate`,
         expect.any(Object),
       );
     });
@@ -353,7 +353,7 @@ describe('Standalone Functions', () => {
       
       expect(result).toEqual(mockProject);
       expect(mockFetch).toHaveBeenCalledWith(
-        `${mockApiUrl}/projects/project-123`,
+        `${mockApiUrl}/api/v1/users/me/projects/project-123`,
         expect.any(Object),
       );
     });

@@ -72,7 +72,7 @@ export class CrunchyConeApiClient {
       throw new Error('API key is required');
     }
 
-    const response = await this.makeApiCall('/auth/me', 'GET', undefined, keyToUse, urlToUse);
+    const response = await this.makeApiCall('/api/v1/auth/validate', 'GET', undefined, keyToUse, urlToUse);
     
     if (response.ok) {
       const data = await response.json() as CrunchyConeApiResponse<CrunchyConeAuthResponse>;
@@ -115,7 +115,7 @@ export class CrunchyConeApiClient {
       throw new Error('Project ID is required');
     }
 
-    const response = await this.makeApiCall(`/projects/${projectId}`, 'GET', undefined, apiKey, urlToUse);
+    const response = await this.makeApiCall(`/api/v1/users/me/projects/${projectId}`, 'GET', undefined, apiKey, urlToUse);
     
     if (response.ok) {
       const data = await response.json() as CrunchyConeApiResponse<CrunchyConeProject>;
@@ -148,7 +148,7 @@ export class CrunchyConeApiClient {
       throw new Error('Project ID is required');
     }
 
-    const response = await this.makeApiCall(`/api/v1/projects/${projectId}/env-vars`, 'GET', undefined, apiKey, urlToUse);
+    const response = await this.makeApiCall(`/api/v1/users/me/projects/${projectId}/env-vars`, 'GET', undefined, apiKey, urlToUse);
     
     if (response.ok) {
       const data = await response.json() as any;
@@ -186,7 +186,7 @@ export class CrunchyConeApiClient {
     }
 
     const body = { variables, merge };
-    const response = await this.makeApiCall(`/api/v1/projects/${projectId}/env-vars`, 'PATCH', body, apiKey, urlToUse);
+    const response = await this.makeApiCall(`/api/v1/users/me/projects/${projectId}/env-vars`, 'PATCH', body, apiKey, urlToUse);
     
     if (response.ok) {
       const data = await response.json() as any;
@@ -215,7 +215,7 @@ export class CrunchyConeApiClient {
       throw new Error('Project ID is required');
     }
 
-    const response = await this.makeApiCall(`/api/v1/projects/${projectId}/secrets`, 'GET', undefined, apiKey, urlToUse);
+    const response = await this.makeApiCall(`/api/v1/users/me/projects/${projectId}/secrets`, 'GET', undefined, apiKey, urlToUse);
     
     if (response.ok) {
       const data = await response.json() as any;
@@ -253,7 +253,7 @@ export class CrunchyConeApiClient {
     }
 
     const body = { secrets, merge };
-    const response = await this.makeApiCall(`/api/v1/projects/${projectId}/secrets`, 'PATCH', body, apiKey, urlToUse);
+    const response = await this.makeApiCall(`/api/v1/users/me/projects/${projectId}/secrets`, 'PATCH', body, apiKey, urlToUse);
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Unknown error' })) as any;
@@ -283,7 +283,7 @@ export class CrunchyConeApiClient {
       throw new Error('Secret key is required');
     }
 
-    const response = await this.makeApiCall(`/api/v1/projects/${projectId}/secrets/${secretKey}`, 'DELETE', undefined, apiKey, urlToUse);
+    const response = await this.makeApiCall(`/api/v1/users/me/projects/${projectId}/secrets/${secretKey}`, 'DELETE', undefined, apiKey, urlToUse);
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: 'Unknown error' })) as any;
