@@ -239,15 +239,20 @@ export class CrunchyConeProvider implements StorageProvider {
       // Step 4: Get the final file metadata to return complete info
       const fileMetadata = await this.getFileMetadata(descriptor.file_id);
 
+      // Get the actual signed URL for direct file access
+      const signedUrl = await this.getSignedUrlFromJson(
+        `${this.config.apiUrl}/api/v1/storage/files/${fileMetadata.file_id}/download?returnSignedUrl=true`,
+      );
+
       return {
         external_id: options.external_id,
         key: fileMetadata.storage_key || fileMetadata.file_path || fileMetadata.file_id,
-        url: `${this.config.apiUrl}/api/v1/storage/files/${fileMetadata.file_id}/download`,
+        url: signedUrl, // Return the actual signed URL that gives file content
         size: fileMetadata.actual_file_size,
         contentType: fileMetadata.content_type,
         metadata: fileMetadata.metadata,
         visibility: 'private', // CrunchyCone manages visibility server-side
-        publicUrl: options.public ? `${this.config.apiUrl}/api/v1/storage/files/${fileMetadata.file_id}/download` : undefined,
+        publicUrl: options.public ? signedUrl : undefined, // Use same signed URL for public access
       };
     } catch (error) {
       // Enhanced error reporting with detailed context
@@ -321,7 +326,7 @@ export class CrunchyConeProvider implements StorageProvider {
 
     // Validate content length matches
     if (actualBodySize !== contentLength) {
-      console.warn(`Content-Length mismatch: expected ${contentLength}, got ${actualBodySize}`);
+      throw new Error(`Content-Length mismatch: expected ${contentLength}, got ${actualBodySize}`);
     }
 
     const response = await fetch(url, {
@@ -442,9 +447,6 @@ export class CrunchyConeProvider implements StorageProvider {
       if (!signedUrl || signedUrl === '') {
         throw new Error(`No valid signed URL found in API response. Got: ${signedUrl}`);
       }
-
-      // Test the signed URL by fetching content and saving to temp location
-      await this.testSignedUrlContent(signedUrl);
       
       return signedUrl;
     } catch (error) {
@@ -456,50 +458,6 @@ export class CrunchyConeProvider implements StorageProvider {
     }
   }
 
-  private async testSignedUrlContent(signedUrl: string): Promise<void> {
-    try {
-      const response = await fetch(signedUrl);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch content from signed URL: ${response.status} ${response.statusText}`);
-      }
-
-      // Read the content to verify it's accessible
-      const content = await response.text();
-      
-      // First check if content was downloaded
-      if (!content || content.length === 0) {
-        throw new Error('Downloaded content is empty');
-      }
-      
-      // In test environments, skip file system operations
-      const isTestEnv = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
-      
-      if (!isTestEnv) {
-        // Save to a temporary location for verification
-        const os = await import('os');
-        const fs = await import('fs');
-        const path = await import('path');
-        
-        const tempDir = os.tmpdir();
-        const tempFileName = `crunchycone-test-${Date.now()}.txt`;
-        const tempFilePath = path.join(tempDir, tempFileName);
-        
-        await fs.promises.writeFile(tempFilePath, content);
-        
-        // Verify the temp file was created and has content
-        const stats = await fs.promises.stat(tempFilePath);
-        if (!stats || stats.size === 0) {
-          throw new Error('Failed to write content to temp file');
-        }
-        
-        // Clean up temp file
-        await fs.promises.unlink(tempFilePath);
-      }
-    } catch (error) {
-      throw new Error(`Signed URL content verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
 
   async fileExists(key: string): Promise<boolean> {
     try {

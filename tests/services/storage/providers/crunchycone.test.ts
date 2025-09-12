@@ -155,6 +155,14 @@ describe('CrunchyConeProvider', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ data: mockFileMetadata }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ 
+            data: { 
+              signedUrl: 'https://storage.example.com/signed-url-test-file-id', 
+            }, 
+          }),
         });
 
       const buffer = Buffer.from('Hello World');
@@ -171,7 +179,7 @@ describe('CrunchyConeProvider', () => {
       expect(result).toEqual({
         external_id: 'test-external-id',
         key: 'user-123/project-456/files/test-external-id-12345.txt',
-        url: 'https://api.crunchycone.com/api/v1/storage/files/test-file-id/download',
+        url: 'https://storage.example.com/signed-url-test-file-id',
         size: 11,
         contentType: 'text/plain',
         metadata: { category: 'test' },
@@ -180,7 +188,7 @@ describe('CrunchyConeProvider', () => {
       });
 
       // Verify API calls
-      expect(mockFetch).toHaveBeenCalledTimes(4);
+      expect(mockFetch).toHaveBeenCalledTimes(5);
       
       // 1. Create file descriptor
       const firstCall = mockFetch.mock.calls[0];
@@ -253,6 +261,14 @@ describe('CrunchyConeProvider', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({ data: mockFileMetadata }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ 
+            data: { 
+              signedUrl: 'https://storage.example.com/signed-url-test-file-id', 
+            }, 
+          }),
         });
 
       const stream = new ReadableStream({
@@ -272,7 +288,7 @@ describe('CrunchyConeProvider', () => {
 
       await provider.uploadFile(options);
 
-      expect(mockFetch).toHaveBeenCalledTimes(4);
+      expect(mockFetch).toHaveBeenCalledTimes(5);
     });
 
     it('should throw error when no input source provided', async () => {

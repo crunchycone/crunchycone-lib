@@ -13,3 +13,6 @@ coverage/
 .vscode/
 .idea/
 *.tsbuildinfo
+
+# Local storage uploads directory
+uploads/
