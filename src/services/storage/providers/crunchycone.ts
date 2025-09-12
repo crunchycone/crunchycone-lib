@@ -1,4 +1,4 @@
-import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo, ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus, FileStreamOptions, FileStreamResult } from '../types';
+import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo, ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus, FileStreamOptions, FileStreamResult, FileUrlOptions } from '../types';
 import { getCrunchyConeAPIKeyWithFallback, getCrunchyConeAPIURL, getCrunchyConeProjectID } from '../../../auth';
 
 export interface CrunchyConeConfig {
@@ -389,26 +389,28 @@ export class CrunchyConeProvider implements StorageProvider {
     });
   }
 
-  async getFileUrl(key: string, _expiresIn: number = 3600): Promise<string> {
+  async getFileUrl(key: string, _expiresIn: number = 3600, options?: FileUrlOptions): Promise<string> {
     // Find file by storage key first
     const fileInfo = await this.findFileByStorageKey(key);
     if (!fileInfo) {
       throw new Error(`File with storage key ${key} not found`);
     }
 
-    // Always get the actual signed URL from the JSON response
-    const downloadUrl = `${this.config.apiUrl}/api/v1/storage/files/${fileInfo.file_id}/download?returnSignedUrl=true`;
+    // Build download URL with content disposition support
+    const disposition = (options?.disposition === 'inline') ? 'inline' : 'attachment';
+    const downloadUrl = `${this.config.apiUrl}/api/v1/storage/files/${fileInfo.file_id}/download?returnSignedUrl=true&disposition=${disposition}`;
     return this.getSignedUrlFromJson(downloadUrl);
   }
 
-  async getFileUrlByExternalId(externalId: string, _expiresIn: number = 3600): Promise<string> {
+  async getFileUrlByExternalId(externalId: string, _expiresIn: number = 3600, options?: FileUrlOptions): Promise<string> {
     // First get the file metadata to extract the file_id
     const response = await this.makeRequest<{ data: CrunchyConeFileMetadata }>(
       `/api/v1/storage/files/by-external-id/${encodeURIComponent(externalId)}`,
     );
     
-    // Always get the actual signed URL from the JSON response
-    const downloadUrl = `${this.config.apiUrl}/api/v1/storage/files/${response.data.file_id}/download?returnSignedUrl=true`;
+    // Build download URL with content disposition support
+    const disposition = (options?.disposition === 'inline') ? 'inline' : 'attachment';
+    const downloadUrl = `${this.config.apiUrl}/api/v1/storage/files/${response.data.file_id}/download?returnSignedUrl=true&disposition=${disposition}`;
     return this.getSignedUrlFromJson(downloadUrl);
   }
 

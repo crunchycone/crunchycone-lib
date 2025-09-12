@@ -742,4 +742,244 @@ describe('CrunchyConeProvider', () => {
       expect(result.message).toContain('authenticated access for all files');
     });
   });
+
+  describe('Content Disposition Support', () => {
+    beforeEach(() => {
+      provider = new CrunchyConeProvider({
+        apiUrl: 'https://api.crunchycone.com',
+        apiKey: 'test-api-key',
+        projectId: 'test-project-id',
+        userId: 'test-user-id',
+      });
+    });
+
+    it('should generate URL with attachment disposition by default', async () => {
+      // Mock finding file by storage key
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: {
+            files: [{
+              file_id: 'test-file-id',
+              storage_key: 'test-key',
+              external_id: 'test-external-id',
+              file_path: 'test/path',
+              content_type: 'image/png',
+              actual_file_size: 1024,
+              upload_status: 'completed',
+              metadata: {},
+              uploaded_at: '2023-01-01T00:00:00Z',
+            }],
+          },
+        }),
+      });
+
+      // Mock the signed URL response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: { signedUrl: 'https://signed-url.example.com/file.png?disposition=attachment' },
+        }),
+      });
+
+      // Mock the signed URL content test
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve('image content'),
+      });
+
+      const result = await provider.getFileUrl('test-key');
+
+      expect(result).toBe('https://signed-url.example.com/file.png?disposition=attachment');
+      
+      // Verify the API was called with attachment disposition
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.crunchycone.com/api/v1/storage/files/test-file-id/download?returnSignedUrl=true&disposition=attachment',
+        expect.any(Object),
+      );
+    });
+
+    it('should generate URL with inline disposition when specified', async () => {
+      // Mock finding file by storage key
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: {
+            files: [{
+              file_id: 'test-file-id',
+              storage_key: 'test-key',
+              external_id: 'test-external-id',
+              file_path: 'test/path',
+              content_type: 'image/png',
+              actual_file_size: 1024,
+              upload_status: 'completed',
+              metadata: {},
+              uploaded_at: '2023-01-01T00:00:00Z',
+            }],
+          },
+        }),
+      });
+
+      // Mock the signed URL response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: { signedUrl: 'https://signed-url.example.com/file.png?disposition=inline' },
+        }),
+      });
+
+      // Mock the signed URL content test
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve('image content'),
+      });
+
+      const result = await provider.getFileUrl('test-key', 3600, { disposition: 'inline' });
+
+      expect(result).toBe('https://signed-url.example.com/file.png?disposition=inline');
+      
+      // Verify the API was called with inline disposition
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.crunchycone.com/api/v1/storage/files/test-file-id/download?returnSignedUrl=true&disposition=inline',
+        expect.any(Object),
+      );
+    });
+
+    it('should generate URL with attachment disposition when explicitly specified', async () => {
+      // Mock finding file by storage key
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: {
+            files: [{
+              file_id: 'test-file-id',
+              storage_key: 'test-key',
+              external_id: 'test-external-id',
+              file_path: 'test/path',
+              content_type: 'application/pdf',
+              actual_file_size: 2048,
+              upload_status: 'completed',
+              metadata: {},
+              uploaded_at: '2023-01-01T00:00:00Z',
+            }],
+          },
+        }),
+      });
+
+      // Mock the signed URL response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: { signedUrl: 'https://signed-url.example.com/file.pdf?disposition=attachment' },
+        }),
+      });
+
+      // Mock the signed URL content test
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve('pdf content'),
+      });
+
+      const result = await provider.getFileUrl('test-key', 3600, { disposition: 'attachment' });
+
+      expect(result).toBe('https://signed-url.example.com/file.pdf?disposition=attachment');
+      
+      // Verify the API was called with attachment disposition
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.crunchycone.com/api/v1/storage/files/test-file-id/download?returnSignedUrl=true&disposition=attachment',
+        expect.any(Object),
+      );
+    });
+
+    it('should support content disposition with getFileUrlByExternalId', async () => {
+      // Mock the file metadata response by external ID
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: {
+            file_id: 'test-file-id',
+            external_id: 'test-external-id',
+            file_path: 'test/path',
+            storage_key: 'files/test-external-id.png',
+            content_type: 'image/png',
+            actual_file_size: 1024,
+            upload_status: 'completed',
+            metadata: {},
+            uploaded_at: '2023-01-01T00:00:00Z',
+          },
+        }),
+      });
+
+      // Mock the signed URL response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: { signedUrl: 'https://signed-url.example.com/file.png?disposition=inline' },
+        }),
+      });
+
+      // Mock the signed URL content test
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve('image content'),
+      });
+
+      const result = await provider.getFileUrlByExternalId('test-external-id', 3600, { disposition: 'inline' });
+
+      expect(result).toBe('https://signed-url.example.com/file.png?disposition=inline');
+      
+      // Verify the API was called with inline disposition
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.crunchycone.com/api/v1/storage/files/test-file-id/download?returnSignedUrl=true&disposition=inline',
+        expect.any(Object),
+      );
+    });
+
+    it('should handle invalid disposition values by defaulting to attachment', async () => {
+      // Mock finding file by storage key
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: {
+            files: [{
+              file_id: 'test-file-id',
+              storage_key: 'test-key',
+              external_id: 'test-external-id',
+              file_path: 'test/path',
+              content_type: 'text/plain',
+              actual_file_size: 500,
+              upload_status: 'completed',
+              metadata: {},
+              uploaded_at: '2023-01-01T00:00:00Z',
+            }],
+          },
+        }),
+      });
+
+      // Mock the signed URL response - should default to attachment
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: { signedUrl: 'https://signed-url.example.com/file.txt?disposition=attachment' },
+        }),
+      });
+
+      // Mock the signed URL content test
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve('text content'),
+      });
+
+      // Pass an invalid disposition value (TypeScript would prevent this, but testing runtime behavior)
+      const result = await provider.getFileUrl('test-key', 3600, { disposition: 'invalid' as any });
+
+      expect(result).toBe('https://signed-url.example.com/file.txt?disposition=attachment');
+      
+      // Verify the API was called with attachment disposition (default fallback)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.crunchycone.com/api/v1/storage/files/test-file-id/download?returnSignedUrl=true&disposition=attachment',
+        expect.any(Object),
+      );
+    });
+  });
 });

@@ -1,5 +1,5 @@
 // Dynamic imports for optional AWS SDK dependencies
-import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo, S3Config, ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus } from '../types';
+import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo, S3Config, ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus, FileUrlOptions } from '../types';
 import { createReadStream } from 'fs';
 import { Readable } from 'stream';
 
@@ -158,12 +158,22 @@ export class S3CompatibleProvider implements StorageProvider {
     }
   }
 
-  async getFileUrl(key: string, expiresIn: number = 3600): Promise<string> {
+  async getFileUrl(key: string, expiresIn: number = 3600, options?: FileUrlOptions): Promise<string> {
     const { client, sdk } = await this.initializeClient();
-    const command = new sdk.GetObjectCommand({
+    
+    // Build command with content disposition support
+    const commandParams: any = {
       Bucket: this.config.bucket,
       Key: key,
-    });
+    };
+    
+    // Add content disposition parameter if specified
+    if (options?.disposition) {
+      const disposition = options.disposition === 'inline' ? 'inline' : 'attachment';
+      commandParams.ResponseContentDisposition = `${disposition}`;
+    }
+    
+    const command = new sdk.GetObjectCommand(commandParams);
 
     try {
       return await sdk.getSignedUrl(client, command, { expiresIn });
@@ -198,12 +208,12 @@ export class S3CompatibleProvider implements StorageProvider {
     await this.deleteFile(fileInfo.key);
   }
 
-  async getFileUrlByExternalId(externalId: string, expiresIn?: number): Promise<string> {
+  async getFileUrlByExternalId(externalId: string, expiresIn?: number, options?: FileUrlOptions): Promise<string> {
     const fileInfo = await this.findFileByExternalId(externalId);
     if (!fileInfo) {
       throw new Error(`File with external_id ${externalId} not found`);
     }
-    return this.getFileUrl(fileInfo.key, expiresIn);
+    return this.getFileUrl(fileInfo.key, expiresIn, options);
   }
 
   async fileExistsByExternalId(externalId: string): Promise<boolean> {

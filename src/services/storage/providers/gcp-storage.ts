@@ -1,4 +1,4 @@
-import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo , ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus } from '../types';
+import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo , ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus, FileUrlOptions } from '../types';
 
 export interface GCPStorageConfig {
   projectId: string;
@@ -131,7 +131,7 @@ export class GCPStorageProvider implements StorageProvider {
     }
   }
 
-  async getFileUrl(key: string, expiresIn?: number): Promise<string> {
+  async getFileUrl(key: string, expiresIn?: number, options?: FileUrlOptions): Promise<string> {
     await this.ensureInitialized();
     
     if (this.config.cdnUrl) {
@@ -141,10 +141,17 @@ export class GCPStorageProvider implements StorageProvider {
     const file = this.bucket.file(key);
     
     if (expiresIn) {
-      const [url] = await file.getSignedUrl({
+      const signedUrlOptions: any = {
         action: 'read',
         expires: Date.now() + expiresIn * 1000,
-      });
+      };
+      
+      // Add content disposition if specified
+      if (options?.disposition) {
+        signedUrlOptions.responseDisposition = options.disposition === 'attachment' ? 'attachment' : 'inline';
+      }
+      
+      const [url] = await file.getSignedUrl(signedUrlOptions);
       return url;
     }
 
@@ -159,19 +166,26 @@ export class GCPStorageProvider implements StorageProvider {
     }
 
     // Generate signed URL with 1 hour expiry as default
-    const [url] = await file.getSignedUrl({
+    const signedUrlOptions: any = {
       action: 'read',
       expires: Date.now() + 3600 * 1000,
-    });
+    };
+    
+    // Add content disposition if specified
+    if (options?.disposition) {
+      signedUrlOptions.responseDisposition = options.disposition === 'attachment' ? 'attachment' : 'inline';
+    }
+    
+    const [url] = await file.getSignedUrl(signedUrlOptions);
     return url;
   }
 
-  async getFileUrlByExternalId(externalId: string, expiresIn?: number): Promise<string> {
+  async getFileUrlByExternalId(externalId: string, expiresIn?: number, options?: FileUrlOptions): Promise<string> {
     const fileInfo = await this.findFileByExternalId(externalId);
     if (!fileInfo) {
       throw new Error(`File with external_id ${externalId} not found`);
     }
-    return this.getFileUrl(fileInfo.key, expiresIn);
+    return this.getFileUrl(fileInfo.key, expiresIn, options);
   }
 
   async fileExists(key: string): Promise<boolean> {

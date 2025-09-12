@@ -9,6 +9,7 @@ import {
   SearchFilesResult,
   FileVisibilityResult,
   FileVisibilityStatus,
+  FileUrlOptions,
 } from '../types';
 import { createReadStream, createWriteStream, promises as fs } from 'fs';
 import { join, dirname, extname } from 'path';
@@ -156,17 +157,18 @@ export class LocalStorageProvider implements StorageProvider {
     await this.deleteFile(fileInfo.key);
   }
 
-  async getFileUrl(key: string, _expiresIn?: number): Promise<string> {
+  async getFileUrl(key: string, _expiresIn?: number, _options?: FileUrlOptions): Promise<string> {
+    // LocalStorage doesn't support content disposition control - URLs always depend on browser behavior
     return `${this.baseUrl}/${key}`;
   }
 
-  async getFileUrlByExternalId(externalId: string, expiresIn?: number): Promise<string> {
+  async getFileUrlByExternalId(externalId: string, expiresIn?: number, options?: FileUrlOptions): Promise<string> {
     const fileInfo = await this.findFileByExternalId(externalId);
     if (!fileInfo) {
       throw new Error(`File with external_id "${externalId}" not found`);
     }
     
-    return this.getFileUrl(fileInfo.key, expiresIn);
+    return this.getFileUrl(fileInfo.key, expiresIn, options);
   }
 
   async fileExists(key: string): Promise<boolean> {

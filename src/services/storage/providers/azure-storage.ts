@@ -1,4 +1,4 @@
-import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo , ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus } from '../types';
+import { StorageProvider, StorageUploadOptions, StorageUploadResult, StorageFileInfo , ListFilesOptions, ListFilesResult, SearchFilesOptions, SearchFilesResult, FileVisibilityResult, FileVisibilityStatus, FileUrlOptions } from '../types';
 
 export interface AzureStorageConfig {
   accountName: string;
@@ -124,7 +124,7 @@ export class AzureStorageProvider implements StorageProvider {
     }
   }
 
-  async getFileUrl(key: string, expiresIn?: number): Promise<string> {
+  async getFileUrl(key: string, expiresIn?: number, options?: FileUrlOptions): Promise<string> {
     await this.ensureInitialized();
     
     if (this.config.cdnUrl) {
@@ -143,13 +143,19 @@ export class AzureStorageProvider implements StorageProvider {
           const { StorageSharedKeyCredential } = await import(azurePackage);
           const credential = new StorageSharedKeyCredential(this.config.accountName, this.config.accountKey);
           
-          const sasOptions = {
+          const sasOptions: any = {
             containerName: this.config.containerName,
             blobName: key,
             permissions: BlobSASPermissions.parse('r'),
             startsOn: new Date(),
             expiresOn: new Date(Date.now() + expiresIn * 1000),
           };
+          
+          // Add content disposition if specified
+          // Note: Azure supports content disposition via contentDisposition parameter in SAS options
+          if (options?.disposition) {
+            sasOptions.contentDisposition = options.disposition === 'attachment' ? 'attachment' : 'inline';
+          }
           
           const sasToken = generateBlobSASQueryParameters(sasOptions, credential).toString();
           return `${blockBlobClient.url}?${sasToken}`;
@@ -163,12 +169,12 @@ export class AzureStorageProvider implements StorageProvider {
     return blockBlobClient.url;
   }
 
-  async getFileUrlByExternalId(externalId: string, expiresIn?: number): Promise<string> {
+  async getFileUrlByExternalId(externalId: string, expiresIn?: number, options?: FileUrlOptions): Promise<string> {
     const fileInfo = await this.findFileByExternalId(externalId);
     if (!fileInfo) {
       throw new Error(`File with external_id ${externalId} not found`);
     }
-    return this.getFileUrl(fileInfo.key, expiresIn);
+    return this.getFileUrl(fileInfo.key, expiresIn, options);
   }
 
   async fileExists(key: string): Promise<boolean> {
@@ -545,7 +551,7 @@ export class AzureStorageProvider implements StorageProvider {
       
       const blockBlobClient = this.containerClient.getBlockBlobClient(key);
       
-      const sasOptions = {
+      const sasOptions: any = {
         containerName: this.config.containerName,
         blobName: key,
         permissions: BlobSASPermissions.parse('r'), // Read permission

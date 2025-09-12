@@ -6,12 +6,12 @@ export interface StorageProvider {
    * Get a URL that can be used to directly download the file content.
    * The returned URL should work with a simple fetch() or browser request without additional authentication.
    */
-  getFileUrl(key: string, expiresIn?: number): Promise<string>;
+  getFileUrl(key: string, expiresIn?: number, options?: FileUrlOptions): Promise<string>;
   /**
    * Get a URL that can be used to directly download the file content by external ID.
    * The returned URL should work with a simple fetch() or browser request without additional authentication.
    */
-  getFileUrlByExternalId(externalId: string, expiresIn?: number): Promise<string>;
+  getFileUrlByExternalId(externalId: string, expiresIn?: number, options?: FileUrlOptions): Promise<string>;
   fileExists(key: string): Promise<boolean>;
   fileExistsByExternalId(externalId: string): Promise<boolean>;
   findFileByExternalId(externalId: string): Promise<StorageFileInfo | null>;
@@ -306,4 +306,14 @@ export interface FileStreamResult {
   
   // Utility methods
   cleanup?: () => Promise<void>;    // Optional cleanup function to call when done
+}
+
+// File URL generation options
+export interface FileUrlOptions {
+  /**
+   * Content disposition for the file URL
+   * - 'attachment': Forces download (default)
+   * - 'inline': Displays in browser when possible
+   */
+  disposition?: 'attachment' | 'inline';
 }
