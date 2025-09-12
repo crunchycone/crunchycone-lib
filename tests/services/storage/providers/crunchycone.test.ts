@@ -680,41 +680,279 @@ describe('CrunchyConeProvider', () => {
   });
 
   describe('visibility management', () => {
-    it('should set file visibility and update metadata', async () => {
-      // Mock finding the file - this needs to return the full file structure
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          data: {
-            files: [{
-              file_id: 'test-file-id',
-              storage_key: 'test-key',
-              metadata: { existing: 'value' },
-              file_path: 'test/path',
-              content_type: 'text/plain',
-              actual_file_size: 100,
-              upload_status: 'completed',
-            }],
+    describe('setFileVisibility', () => {
+      it('should set file visibility to public using API endpoint', async () => {
+        // Mock finding the file by storage key
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            data: {
+              files: [{
+                file_id: 'test-file-id',
+                storage_key: 'test-key',
+                metadata: { existing: 'value' },
+                file_path: 'test/path',
+                content_type: 'text/plain',
+                actual_file_size: 100,
+                upload_status: 'completed',
+              }],
+            },
+          }),
+        });
+
+        // Mock visibility API endpoint response
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            data: {
+              success: true,
+              message: 'File visibility updated to public',
+              public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+            },
+          }),
+        });
+
+        const result = await provider.setFileVisibility('test-key', 'public');
+
+        expect(result.success).toBe(true);
+        expect(result.requestedVisibility).toBe('public');
+        expect(result.actualVisibility).toBe('public');
+        expect(result.publicUrl).toBe('https://bucket.region.digitaloceanspaces.com/path/to/file.txt');
+        expect(result.message).toBe('File visibility updated to public');
+        expect(result.providerSpecific).toEqual({
+          fileId: 'test-file-id',
+          updatedViaAPI: true,
+        });
+
+        // Verify the API was called with correct endpoint and data
+        expect(mockFetch).toHaveBeenLastCalledWith(
+          'https://api.crunchycone.com/api/v1/storage/files/test-file-id/visibility',
+          {
+            method: 'PATCH',
+            signal: expect.any(AbortSignal),
+            headers: {
+              'X-API-Key': 'test-api-key',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ visibility: 'public' }),
           },
-        }),
+        );
       });
 
-      // Mock metadata update
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({}),
+      it('should set file visibility to private using API endpoint', async () => {
+        // Mock finding the file by storage key
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            data: {
+              files: [{
+                file_id: 'test-file-id',
+                storage_key: 'test-key',
+                metadata: { existing: 'value' },
+                file_path: 'test/path',
+                content_type: 'text/plain',
+                actual_file_size: 100,
+                upload_status: 'completed',
+              }],
+            },
+          }),
+        });
+
+        // Mock visibility API endpoint response
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            data: {
+              success: true,
+              message: 'File visibility updated to private',
+              public_url: '',
+            },
+          }),
+        });
+
+        const result = await provider.setFileVisibility('test-key', 'private');
+
+        expect(result.success).toBe(true);
+        expect(result.requestedVisibility).toBe('private');
+        expect(result.actualVisibility).toBe('private');
+        expect(result.publicUrl).toBe('');
+        expect(result.message).toBe('File visibility updated to private');
       });
 
-      const result = await provider.setFileVisibility('test-key', 'public');
+      it('should handle file not found error', async () => {
+        // Mock finding the file - empty result
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            data: {
+              files: [],
+            },
+          }),
+        });
 
-      expect(result.success).toBe(true);
-      expect(result.requestedVisibility).toBe('public');
-      expect(result.actualVisibility).toBe('private');
-      expect(result.message).toContain('CrunchyCone uses authenticated access');
-      expect(result.providerSpecific).toEqual({
-        metadataUpdated: true,
-        requiresAuthentication: true,
+        const result = await provider.setFileVisibility('nonexistent-key', 'public');
+
+        expect(result.success).toBe(false);
+        expect(result.requestedVisibility).toBe('public');
+        expect(result.actualVisibility).toBe('private');
+        expect(result.message).toBe('File with key nonexistent-key not found');
+      });
+
+      it('should handle API error during visibility update', async () => {
+        // Mock finding the file successfully
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({
+            data: {
+              files: [{
+                file_id: 'test-file-id',
+                storage_key: 'test-key',
+                metadata: {},
+                file_path: 'test/path',
+                content_type: 'text/plain',
+                actual_file_size: 100,
+                upload_status: 'completed',
+              }],
+            },
+          }),
+        });
+
+        // Mock API error response
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status: 400,
+          statusText: 'Bad Request',
+          text: () => Promise.resolve('{"error": "Invalid visibility value"}'),
+        });
+
+        const result = await provider.setFileVisibility('test-key', 'public');
+
+        expect(result.success).toBe(false);
+        expect(result.requestedVisibility).toBe('public');
+        expect(result.actualVisibility).toBe('private');
+        expect(result.message).toContain('Failed to set file visibility');
+      });
+    });
+
+    describe('setFileVisibilityByExternalId', () => {
+      it('should set file visibility to public by external ID', async () => {
+        // Mock visibility API endpoint response
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            data: {
+              success: true,
+              message: 'File visibility updated to public',
+              public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+            },
+          }),
+        });
+
+        const result = await provider.setFileVisibilityByExternalId('test-external-id', 'public');
+
+        expect(result.success).toBe(true);
+        expect(result.requestedVisibility).toBe('public');
+        expect(result.actualVisibility).toBe('public');
+        expect(result.publicUrl).toBe('https://bucket.region.digitaloceanspaces.com/path/to/file.txt');
+        expect(result.message).toBe('File visibility updated to public');
+        expect(result.providerSpecific).toEqual({
+          externalId: 'test-external-id',
+          updatedViaAPI: true,
+        });
+
+        // Verify the API was called with correct endpoint
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.crunchycone.com/api/v1/storage/files/by-external-id/test-external-id/visibility',
+          {
+            method: 'PATCH',
+            signal: expect.any(AbortSignal),
+            headers: {
+              'X-API-Key': 'test-api-key',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ visibility: 'public' }),
+          },
+        );
+      });
+
+      it('should handle external ID not found error', async () => {
+        // Mock 404 error response
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          statusText: 'Not Found',
+          text: () => Promise.resolve('{"error": "File not found"}'),
+        });
+
+        const result = await provider.setFileVisibilityByExternalId('nonexistent-id', 'public');
+
+        expect(result.success).toBe(false);
+        expect(result.requestedVisibility).toBe('public');
+        expect(result.actualVisibility).toBe('private');
+        expect(result.message).toBe('File with external_id nonexistent-id not found');
+      });
+    });
+
+    describe('updateFileVisibilityById', () => {
+      it('should update file visibility directly by file ID', async () => {
+        // Mock visibility API endpoint response
+        mockFetch.mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({
+            data: {
+              success: true,
+              message: 'File visibility updated to public',
+              public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+            },
+          }),
+        });
+
+        const result = await provider.updateFileVisibilityById('test-file-id', 'public');
+
+        expect(result.success).toBe(true);
+        expect(result.requestedVisibility).toBe('public');
+        expect(result.actualVisibility).toBe('public');
+        expect(result.publicUrl).toBe('https://bucket.region.digitaloceanspaces.com/path/to/file.txt');
+        expect(result.message).toBe('File visibility updated to public');
+        expect(result.providerSpecific).toEqual({
+          fileId: 'test-file-id',
+          updatedViaAPI: true,
+        });
+
+        // Verify the API was called with correct endpoint
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.crunchycone.com/api/v1/storage/files/test-file-id/visibility',
+          {
+            method: 'PATCH',
+            signal: expect.any(AbortSignal),
+            headers: {
+              'X-API-Key': 'test-api-key',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ visibility: 'public' }),
+          },
+        );
+      });
+
+      it('should handle file ID not found error', async () => {
+        // Mock 404 error response
+        mockFetch.mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          statusText: 'Not Found',
+          text: () => Promise.resolve('{"error": "File not found"}'),
+        });
+
+        const result = await provider.updateFileVisibilityById('nonexistent-file-id', 'public');
+
+        expect(result.success).toBe(false);
+        expect(result.requestedVisibility).toBe('public');
+        expect(result.actualVisibility).toBe('private');
+        expect(result.message).toBe('File with ID nonexistent-file-id not found');
       });
     });
 

@@ -854,25 +854,27 @@ export class CrunchyConeProvider implements StorageProvider {
         };
       }
 
-      // Update file metadata to track visibility preference
-      await this.updateFileMetadata(fileMetadata.file_id, {
-        ...fileMetadata.metadata,
-        visibility: visibility,
+      // Use the new API endpoint to update visibility
+      const response = await this.makeRequest<{ 
+        data: { 
+          success: boolean; 
+          message: string; 
+          public_url?: string; 
+        } 
+      }>(`/api/v1/storage/files/${fileMetadata.file_id}/visibility`, {
+        method: 'PATCH',
+        body: JSON.stringify({ visibility }),
       });
 
-      // CrunchyCone doesn't have native public/private file control at the storage level
-      // All files are accessed through signed URLs with authentication
-      // The visibility metadata helps track user preference for future integrations
       return {
-        success: true,
+        success: response.data.success,
         requestedVisibility: visibility,
-        actualVisibility: 'private', // CrunchyCone always uses authenticated access
-        message: visibility === 'public' 
-          ? 'File visibility preference set to public. Note: CrunchyCone uses authenticated access for all files.'
-          : 'File visibility set to private.',
+        actualVisibility: visibility, // CrunchyCone now supports actual visibility changes
+        publicUrl: response.data.public_url,
+        message: response.data.message,
         providerSpecific: {
-          metadataUpdated: true,
-          requiresAuthentication: true,
+          fileId: fileMetadata.file_id,
+          updatedViaAPI: true,
         },
       };
     } catch (error) {
@@ -887,27 +889,27 @@ export class CrunchyConeProvider implements StorageProvider {
 
   async setFileVisibilityByExternalId(externalId: string, visibility: 'public' | 'private'): Promise<FileVisibilityResult> {
     try {
-      // Get file metadata by external ID
-      const response = await this.makeRequest<{ data: CrunchyConeFileMetadata }>(
-        `/api/v1/storage/files/by-external-id/${encodeURIComponent(externalId)}`,
-      );
-
-      // Update file metadata to track visibility preference
-      await this.updateFileMetadata(response.data.file_id, {
-        ...response.data.metadata,
-        visibility: visibility,
+      // Use the new API endpoint to update visibility by external ID
+      const response = await this.makeRequest<{ 
+        data: { 
+          success: boolean; 
+          message: string; 
+          public_url?: string; 
+        } 
+      }>(`/api/v1/storage/files/by-external-id/${encodeURIComponent(externalId)}/visibility`, {
+        method: 'PATCH',
+        body: JSON.stringify({ visibility }),
       });
 
       return {
-        success: true,
+        success: response.data.success,
         requestedVisibility: visibility,
-        actualVisibility: 'private', // CrunchyCone always uses authenticated access
-        message: visibility === 'public' 
-          ? 'File visibility preference set to public. Note: CrunchyCone uses authenticated access for all files.'
-          : 'File visibility set to private.',
+        actualVisibility: visibility, // CrunchyCone now supports actual visibility changes
+        publicUrl: response.data.public_url,
+        message: response.data.message,
         providerSpecific: {
-          metadataUpdated: true,
-          requiresAuthentication: true,
+          externalId,
+          updatedViaAPI: true,
         },
       };
     } catch (error) {
@@ -1165,6 +1167,53 @@ export class CrunchyConeProvider implements StorageProvider {
       method: 'PUT',
       body: JSON.stringify({ metadata }),
     });
+  }
+
+  /**
+   * Update file visibility directly using file ID (more efficient when you have the file ID)
+   * This method directly calls the CrunchyCone visibility API
+   */
+  async updateFileVisibilityById(fileId: string, visibility: 'public' | 'private'): Promise<FileVisibilityResult> {
+    try {
+      const response = await this.makeRequest<{ 
+        data: { 
+          success: boolean; 
+          message: string; 
+          public_url?: string; 
+        } 
+      }>(`/api/v1/storage/files/${fileId}/visibility`, {
+        method: 'PATCH',
+        body: JSON.stringify({ visibility }),
+      });
+
+      return {
+        success: response.data.success,
+        requestedVisibility: visibility,
+        actualVisibility: visibility,
+        publicUrl: response.data.public_url,
+        message: response.data.message,
+        providerSpecific: {
+          fileId,
+          updatedViaAPI: true,
+        },
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return {
+          success: false,
+          requestedVisibility: visibility,
+          actualVisibility: 'private',
+          message: `File with ID ${fileId} not found`,
+        };
+      }
+      
+      return {
+        success: false,
+        requestedVisibility: visibility,
+        actualVisibility: 'private',
+        message: `Failed to set file visibility: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
   }
 
   async isAvailable(): Promise<boolean> {
