@@ -117,8 +117,46 @@ export class CrunchyConeProvider implements StorageProvider {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`CrunchyCone API error (${response.status}) at ${url}: ${errorText}`);
+        let errorDetails = '';
+        let errorData: any = null;
+        
+        try {
+          const responseText = await response.text();
+          errorDetails = responseText;
+          
+          // Try to parse as JSON for structured error info
+          try {
+            errorData = JSON.parse(responseText);
+          } catch {
+            // Not JSON, use raw text
+          }
+        } catch {
+          errorDetails = 'Could not read response body';
+        }
+
+        // Build comprehensive error message
+        const errorParts = [
+          `CrunchyCone API error (${response.status} ${response.statusText})`,
+          `URL: ${url}`,
+          `Method: ${options.method || 'GET'}`,
+        ];
+
+        // Add structured error info if available
+        if (errorData && typeof errorData === 'object') {
+          if (errorData.error) {
+            errorParts.push(`Error: ${errorData.error}`);
+          }
+          if (errorData.message && errorData.message !== errorData.error) {
+            errorParts.push(`Message: ${errorData.message}`);
+          }
+          if (errorData.details) {
+            errorParts.push(`Details: ${JSON.stringify(errorData.details)}`);
+          }
+        } else if (errorDetails) {
+          errorParts.push(`Response: ${errorDetails}`);
+        }
+
+        throw new Error(errorParts.join(' | '));
       }
 
       // Handle 204 No Content responses
@@ -212,9 +250,29 @@ export class CrunchyConeProvider implements StorageProvider {
         publicUrl: options.public ? `${this.config.apiUrl}/api/v1/storage/files/${fileMetadata.file_id}/download` : undefined,
       };
     } catch (error) {
+      // Enhanced error reporting with detailed context
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const fileName = options.filename || options.external_id || 'unknown';
+      
+      // Enhanced error reporting with context
+      const contextualError = `Upload failed for file "${fileName}": ${errorMessage}`;
+      
+      // Add additional context if we have file info
+      const contextParts = [];
+      if (options.external_id) {
+        contextParts.push(`external_id: ${options.external_id}`);
+      }
+      if (filePath) {
+        contextParts.push(`file_path: ${filePath}`);
+      }
+      
+      const finalError = contextParts.length > 0 
+        ? `${contextualError} (${contextParts.join(', ')})` 
+        : contextualError;
+      
       // If upload fails, we could optionally clean up the file descriptor
       // For now, we'll let the API handle cleanup of failed uploads
-      throw new Error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(finalError);
     }
   }
 
@@ -243,11 +301,14 @@ export class CrunchyConeProvider implements StorageProvider {
     contentLength: number,
   ): Promise<void> {
     let body: Buffer | ReadableStream;
+    let actualBodySize = 0;
 
     if (Buffer.isBuffer(data)) {
       body = data;
+      actualBodySize = data.length;
     } else if (data instanceof ReadableStream) {
       body = data;
+      actualBodySize = contentLength; // Use provided content length for streams
     } else {
       // Node.js ReadableStream - convert to Buffer for fetch
       const chunks: Buffer[] = [];
@@ -255,6 +316,12 @@ export class CrunchyConeProvider implements StorageProvider {
         chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
       }
       body = Buffer.concat(chunks);
+      actualBodySize = body.length;
+    }
+
+    // Validate content length matches
+    if (actualBodySize !== contentLength) {
+      console.warn(`Content-Length mismatch: expected ${contentLength}, got ${actualBodySize}`);
     }
 
     const response = await fetch(url, {
@@ -267,7 +334,25 @@ export class CrunchyConeProvider implements StorageProvider {
     });
 
     if (!response.ok) {
-      throw new Error(`Upload to presigned URL failed: ${response.status} ${response.statusText}`);
+      // Get the response body for detailed error information
+      let errorDetails = '';
+      try {
+        const responseText = await response.text();
+        errorDetails = responseText ? ` - Response: ${responseText}` : '';
+      } catch {
+        errorDetails = ' - Could not read response body';
+      }
+
+      // Enhanced error message with key information
+      const errorMessage = [
+        'Upload to presigned URL failed:',
+        `Status: ${response.status} ${response.statusText}`,
+        `Content-Type: ${contentType}`,
+        `Content-Length: ${contentLength}`,
+        errorDetails,
+      ].join(' ');
+
+      throw new Error(errorMessage);
     }
   }
 
@@ -348,9 +433,6 @@ export class CrunchyConeProvider implements StorageProvider {
         returnUrl?: string;
       };
       
-      // Debug: Print the actual response
-      console.log('🔍 Debug: Download endpoint response:', JSON.stringify(jsonResponse, null, 2));
-      
       // Handle wrapped response format
       const data = jsonResponse.data || jsonResponse;
       
@@ -414,8 +496,6 @@ export class CrunchyConeProvider implements StorageProvider {
         // Clean up temp file
         await fs.promises.unlink(tempFilePath);
       }
-      
-      console.log(`✅ Signed URL content verified (${content.length} bytes downloaded to temp location)`);
     } catch (error) {
       throw new Error(`Signed URL content verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -468,7 +548,17 @@ export class CrunchyConeProvider implements StorageProvider {
       // This is not efficient for large datasets, but works for the interface
       const response = await this.makeRequest<{ data: { files: CrunchyConeFileMetadata[] } }>('/api/v1/storage/files');
       
-      const file = response.data.files.find(f => f.storage_key === storageKey);
+      // First try to find by storage_key
+      let file = response.data.files.find(f => f.storage_key === storageKey);
+      
+      if (file) {
+        return file;
+      }
+
+      // If not found by storage_key, try file_path as fallback
+      // This is needed because CrunchyCone may return undefined storage_key but valid file_path
+      file = response.data.files.find(f => f.file_path === storageKey);
+      
       return file || null;
     } catch (error) {
       if (error instanceof Error && error.message.includes('404')) {

@@ -324,7 +324,7 @@ describe('CrunchyConeProvider', () => {
         filename: 'test.txt',
       };
 
-      await expect(provider.uploadFile(options)).rejects.toThrow('Upload failed: Upload to presigned URL failed: 500 Internal Server Error');
+      await expect(provider.uploadFile(options)).rejects.toThrow('Upload failed for file "test.txt"');
     });
   });
 
@@ -567,7 +567,7 @@ describe('CrunchyConeProvider', () => {
         text: () => Promise.resolve('Internal Server Error'),
       });
 
-      await expect(provider.findFileByExternalId('test-id')).rejects.toThrow('CrunchyCone API error (500) at https://api.crunchycone.com/api/v1/storage/files/by-external-id/test-id: Internal Server Error');
+      await expect(provider.findFileByExternalId('test-id')).rejects.toThrow('CrunchyCone API error (500 undefined) | URL: https://api.crunchycone.com/api/v1/storage/files/by-external-id/test-id | Method: GET | Response: Internal Server Error');
     });
 
     it('should handle request timeout', async () => {
