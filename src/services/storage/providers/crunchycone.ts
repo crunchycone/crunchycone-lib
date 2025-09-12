@@ -545,8 +545,8 @@ export class CrunchyConeProvider implements StorageProvider {
       contentType: metadata.content_type,
       lastModified: metadata.uploaded_at ? new Date(metadata.uploaded_at) : new Date(metadata.updated_at),
       metadata: metadata.metadata,
-      visibility: 'private', // CrunchyCone always uses authenticated access
-      publicUrl: undefined, // CrunchyCone doesn't have native public URLs
+      visibility: metadata.visibility || 'private', // Use actual visibility from API response
+      publicUrl: metadata.visibility === 'public' ? metadata.public_url || undefined : undefined,
     };
   }
 

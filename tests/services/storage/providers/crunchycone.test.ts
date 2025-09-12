@@ -1064,6 +1064,88 @@ describe('CrunchyConeProvider', () => {
     });
   });
 
+  describe('listFiles', () => {
+    beforeEach(() => {
+      provider = new CrunchyConeProvider({
+        apiUrl: 'https://api.crunchycone.com',
+        apiKey: 'test-api-key',
+        projectId: 'test-project-id',
+        userId: 'test-user-id',
+      });
+    });
+
+    it('should return files with correct visibility from API response', async () => {
+      // Mock the API response with mixed visibility files
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: {
+            files: [
+              {
+                file_id: 'file-1',
+                user_id: 'test-user-id',
+                project_id: 'test-project-id',
+                storage_key: 'path/to/public-file.jpg',
+                file_path: 'path/to/public-file.jpg',
+                original_filename: 'public-file.jpg',
+                content_type: 'image/jpeg',
+                expected_file_size: 12345,
+                actual_file_size: 12345,
+                upload_status: 'completed' as const,
+                visibility: 'public' as const,
+                public_url: 'https://public.crunchycone.com/file-1.jpg',
+                metadata: { category: 'image' },
+                created_at: '2023-01-01T00:00:00Z',
+                updated_at: '2023-01-01T00:00:00Z',
+                uploaded_at: '2023-01-01T00:00:00Z',
+              },
+              {
+                file_id: 'file-2',
+                user_id: 'test-user-id',
+                project_id: 'test-project-id',
+                storage_key: 'path/to/private-file.pdf',
+                file_path: 'path/to/private-file.pdf',
+                original_filename: 'private-file.pdf',
+                content_type: 'application/pdf',
+                expected_file_size: 67890,
+                actual_file_size: 67890,
+                upload_status: 'completed' as const,
+                visibility: 'private' as const,
+                public_url: null,
+                metadata: { category: 'document' },
+                created_at: '2023-01-01T00:00:00Z',
+                updated_at: '2023-01-01T00:00:00Z',
+                uploaded_at: '2023-01-01T00:00:00Z',
+              },
+            ],
+            total_count: 2,
+            has_more: false,
+          },
+        }),
+      });
+
+      const result = await provider.listFiles();
+
+      expect(result.files).toHaveLength(2);
+      
+      // Files are sorted by key alphabetically, so private file comes first
+      // Check private file (sorted first alphabetically)
+      const privateFile = result.files[0];
+      expect(privateFile.visibility).toBe('private');
+      expect(privateFile.publicUrl).toBeUndefined();
+      expect(privateFile.key).toBe('path/to/private-file.pdf');
+
+      // Check public file (sorted second alphabetically)
+      const publicFile = result.files[1];
+      expect(publicFile.visibility).toBe('public');
+      expect(publicFile.publicUrl).toBe('https://public.crunchycone.com/file-1.jpg');
+      expect(publicFile.key).toBe('path/to/public-file.jpg');
+
+      expect(result.totalCount).toBe(2);
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
   describe('Content Disposition Support', () => {
     beforeEach(() => {
       provider = new CrunchyConeProvider({
