@@ -843,6 +843,8 @@ export class CrunchyConeProvider implements StorageProvider {
   // File visibility management
   async setFileVisibility(key: string, visibility: 'public' | 'private'): Promise<FileVisibilityResult> {
     try {
+      // Wait for config to be initialized
+      await this.configPromise;
       // Find the file by storage key first
       const fileMetadata = await this.findFileByStorageKey(key);
       if (!fileMetadata) {
@@ -855,21 +857,46 @@ export class CrunchyConeProvider implements StorageProvider {
       }
 
 
-      // Use the new API endpoint to update visibility
-      const response = await this.makeRequest<{ 
-        success?: boolean;
-        message?: string;
-        data?: {
-          file: {
-            id: string;
-            visibility: 'public' | 'private';
-            public_url?: string;
-          };
-        };
-      }>(`/api/v1/users/me/projects/${this.config.projectId}/files/${fileMetadata.file_id}/visibility`, {
-        method: 'PATCH',
-        body: JSON.stringify({ visibility }),
-      });
+
+      // Try the correct endpoint first, with fallbacks
+      const endpointsToTry = [
+        `/api/v1/storage/files/${fileMetadata.file_id}/visibility`,
+        `/api/v1/users/me/projects/${this.config.projectId}/files/${fileMetadata.file_id}/visibility`,
+        `/api/v1/files/${fileMetadata.file_id}/visibility`,
+      ];
+
+      let response: any;
+      let successfulEndpoint: string | null = null;
+      let lastError: Error | null = null;
+
+      for (const endpoint of endpointsToTry) {
+        try {
+          response = await this.makeRequest<{ 
+            success?: boolean;
+            message?: string;
+            data?: {
+              file: {
+                id: string;
+                visibility: 'public' | 'private';
+                public_url?: string;
+              };
+            };
+          }>(endpoint, {
+            method: 'PATCH',
+            body: JSON.stringify({ visibility }),
+          });
+          
+          successfulEndpoint = endpoint;
+          break;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          continue;
+        }
+      }
+
+      if (!response && lastError) {
+        throw lastError;
+      }
 
       // Handle the new response format
       const success = response.success ?? !!response.data?.file;
@@ -885,6 +912,7 @@ export class CrunchyConeProvider implements StorageProvider {
         providerSpecific: {
           fileId: fileMetadata.file_id,
           updatedViaAPI: true,
+          successfulEndpoint,
           rawResponse: response, // Include raw response for debugging
         },
       };
@@ -905,21 +933,48 @@ export class CrunchyConeProvider implements StorageProvider {
 
   async setFileVisibilityByExternalId(externalId: string, visibility: 'public' | 'private'): Promise<FileVisibilityResult> {
     try {
-      // Use the new API endpoint to update visibility by external ID
-      const response = await this.makeRequest<{ 
-        success?: boolean;
-        message?: string;
-        data?: {
-          file: {
-            id: string;
-            visibility: 'public' | 'private';
-            public_url?: string;
-          };
-        };
-      }>(`/api/v1/users/me/projects/${this.config.projectId}/files/external/${encodeURIComponent(externalId)}/visibility`, {
-        method: 'PATCH',
-        body: JSON.stringify({ visibility }),
-      });
+      // Wait for config to be initialized
+      await this.configPromise;
+
+      // Try multiple endpoint variations to find the correct one for external ID
+      const endpointsToTry = [
+        `/api/v1/storage/files/by-external-id/${encodeURIComponent(externalId)}/visibility`,
+        `/api/v1/users/me/projects/${this.config.projectId}/files/external/${encodeURIComponent(externalId)}/visibility`,
+        `/api/v1/files/by-external-id/${encodeURIComponent(externalId)}/visibility`,
+      ];
+
+      let response: any;
+      let successfulEndpoint: string | null = null;
+      let lastError: Error | null = null;
+
+      for (const endpoint of endpointsToTry) {
+        try {
+          response = await this.makeRequest<{ 
+            success?: boolean;
+            message?: string;
+            data?: {
+              file: {
+                id: string;
+                visibility: 'public' | 'private';
+                public_url?: string;
+              };
+            };
+          }>(endpoint, {
+            method: 'PATCH',
+            body: JSON.stringify({ visibility }),
+          });
+          
+          successfulEndpoint = endpoint;
+          break;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          continue;
+        }
+      }
+
+      if (!response && lastError) {
+        throw lastError;
+      }
 
       // Handle the new response format
       const success = response.success ?? !!response.data?.file;
@@ -935,6 +990,7 @@ export class CrunchyConeProvider implements StorageProvider {
         providerSpecific: {
           externalId,
           updatedViaAPI: true,
+          successfulEndpoint,
           rawResponse: response, // Include raw response for debugging
         },
       };
@@ -1201,20 +1257,49 @@ export class CrunchyConeProvider implements StorageProvider {
    */
   async updateFileVisibilityById(fileId: string, visibility: 'public' | 'private'): Promise<FileVisibilityResult> {
     try {
-      const response = await this.makeRequest<{ 
-        success?: boolean;
-        message?: string;
-        data?: {
-          file: {
-            id: string;
-            visibility: 'public' | 'private';
-            public_url?: string;
-          };
-        };
-      }>(`/api/v1/users/me/projects/${this.config.projectId}/files/${fileId}/visibility`, {
-        method: 'PATCH',
-        body: JSON.stringify({ visibility }),
-      });
+      // Wait for config to be initialized
+      await this.configPromise;
+      // Log debug information for troubleshooting
+
+      // Try the correct endpoint first, with fallbacks
+      const endpointsToTry = [
+        `/api/v1/storage/files/${fileId}/visibility`,
+        `/api/v1/users/me/projects/${this.config.projectId}/files/${fileId}/visibility`,
+        `/api/v1/files/${fileId}/visibility`,
+      ];
+
+      let response: any;
+      let successfulEndpoint: string | null = null;
+      let lastError: Error | null = null;
+
+      for (const endpoint of endpointsToTry) {
+        try {
+          response = await this.makeRequest<{ 
+            success?: boolean;
+            message?: string;
+            data?: {
+              file: {
+                id: string;
+                visibility: 'public' | 'private';
+                public_url?: string;
+              };
+            };
+          }>(endpoint, {
+            method: 'PATCH',
+            body: JSON.stringify({ visibility }),
+          });
+          
+          successfulEndpoint = endpoint;
+          break;
+        } catch (error) {
+          lastError = error instanceof Error ? error : new Error(String(error));
+          continue;
+        }
+      }
+
+      if (!response && lastError) {
+        throw lastError;
+      }
 
       // Handle the new response format
       const success = response.success ?? !!response.data?.file;
@@ -1230,6 +1315,7 @@ export class CrunchyConeProvider implements StorageProvider {
         providerSpecific: {
           fileId,
           updatedViaAPI: true,
+          successfulEndpoint,
           rawResponse: response, // Include raw response for debugging
         },
       };

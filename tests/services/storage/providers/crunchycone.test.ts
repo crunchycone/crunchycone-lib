@@ -731,7 +731,7 @@ describe('CrunchyConeProvider', () => {
 
         // Verify the API was called with correct endpoint and data
         expect(mockFetch).toHaveBeenLastCalledWith(
-          'https://api.crunchycone.com/api/v1/users/me/projects/test-project-id/files/test-file-id/visibility',
+          'https://api.crunchycone.com/api/v1/storage/files/test-file-id/visibility',
           {
             method: 'PATCH',
             signal: expect.any(AbortSignal),
@@ -827,13 +827,26 @@ describe('CrunchyConeProvider', () => {
           }),
         });
 
-        // Mock API error response
-        mockFetch.mockResolvedValueOnce({
-          ok: false,
-          status: 400,
-          statusText: 'Bad Request',
-          text: () => Promise.resolve('{"error": "Invalid visibility value"}'),
-        });
+        // Mock API error responses for all endpoints
+        mockFetch
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 400,
+            statusText: 'Bad Request',
+            text: () => Promise.resolve('{"error": "Invalid visibility value"}'),
+          })
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 400,
+            statusText: 'Bad Request',
+            text: () => Promise.resolve('{"error": "Invalid visibility value"}'),
+          })
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 400,
+            statusText: 'Bad Request',
+            text: () => Promise.resolve('{"error": "Invalid visibility value"}'),
+          });
 
         const result = await provider.setFileVisibility('test-key', 'public');
 
@@ -877,7 +890,7 @@ describe('CrunchyConeProvider', () => {
 
         // Verify the API was called with correct endpoint
         expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.crunchycone.com/api/v1/users/me/projects/test-project-id/files/external/test-external-id/visibility',
+          'https://api.crunchycone.com/api/v1/storage/files/by-external-id/test-external-id/visibility',
           {
             method: 'PATCH',
             signal: expect.any(AbortSignal),
@@ -891,13 +904,26 @@ describe('CrunchyConeProvider', () => {
       });
 
       it('should handle external ID not found error', async () => {
-        // Mock 404 error response
-        mockFetch.mockResolvedValueOnce({
-          ok: false,
-          status: 404,
-          statusText: 'Not Found',
-          text: () => Promise.resolve('{"error": "File not found"}'),
-        });
+        // Mock 404 error responses for all endpoints
+        mockFetch
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found',
+            text: () => Promise.resolve('{"error": "File not found"}'),
+          })
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found',
+            text: () => Promise.resolve('{"error": "File not found"}'),
+          })
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found',
+            text: () => Promise.resolve('{"error": "File not found"}'),
+          });
 
         const result = await provider.setFileVisibilityByExternalId('nonexistent-id', 'public');
 
@@ -941,7 +967,7 @@ describe('CrunchyConeProvider', () => {
 
         // Verify the API was called with correct endpoint
         expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.crunchycone.com/api/v1/users/me/projects/test-project-id/files/test-file-id/visibility',
+          'https://api.crunchycone.com/api/v1/storage/files/test-file-id/visibility',
           {
             method: 'PATCH',
             signal: expect.any(AbortSignal),
@@ -955,13 +981,26 @@ describe('CrunchyConeProvider', () => {
       });
 
       it('should handle file ID not found error', async () => {
-        // Mock 404 error response
-        mockFetch.mockResolvedValueOnce({
-          ok: false,
-          status: 404,
-          statusText: 'Not Found',
-          text: () => Promise.resolve('{"error": "File not found"}'),
-        });
+        // Mock 404 error responses for all endpoints
+        mockFetch
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found',
+            text: () => Promise.resolve('{"error": "File not found"}'),
+          })
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found',
+            text: () => Promise.resolve('{"error": "File not found"}'),
+          })
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found',
+            text: () => Promise.resolve('{"error": "File not found"}'),
+          });
 
         const result = await provider.updateFileVisibilityById('nonexistent-file-id', 'public');
 
