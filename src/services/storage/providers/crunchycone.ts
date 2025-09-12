@@ -854,35 +854,51 @@ export class CrunchyConeProvider implements StorageProvider {
         };
       }
 
+
       // Use the new API endpoint to update visibility
       const response = await this.makeRequest<{ 
-        data: { 
-          success: boolean; 
-          message: string; 
-          public_url?: string; 
-        } 
-      }>(`/api/v1/storage/files/${fileMetadata.file_id}/visibility`, {
+        success?: boolean;
+        message?: string;
+        data?: {
+          file: {
+            id: string;
+            visibility: 'public' | 'private';
+            public_url?: string;
+          };
+        };
+      }>(`/api/v1/users/me/projects/${this.config.projectId}/files/${fileMetadata.file_id}/visibility`, {
         method: 'PATCH',
         body: JSON.stringify({ visibility }),
       });
 
+      // Handle the new response format
+      const success = response.success ?? !!response.data?.file;
+      const message = response.message || 'File visibility updated successfully';
+      const publicUrl = response.data?.file?.public_url;
+
       return {
-        success: response.data.success,
+        success,
         requestedVisibility: visibility,
-        actualVisibility: visibility, // CrunchyCone now supports actual visibility changes
-        publicUrl: response.data.public_url,
-        message: response.data.message,
+        actualVisibility: success ? visibility : 'private',
+        publicUrl,
+        message,
         providerSpecific: {
           fileId: fileMetadata.file_id,
           updatedViaAPI: true,
+          rawResponse: response, // Include raw response for debugging
         },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
       return {
         success: false,
         requestedVisibility: visibility,
         actualVisibility: 'private',
-        message: `Failed to set file visibility: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Failed to set file visibility: ${errorMessage}`,
+        providerSpecific: {
+          errorDetails: errorMessage,
+        },
       };
     }
   }
@@ -891,25 +907,35 @@ export class CrunchyConeProvider implements StorageProvider {
     try {
       // Use the new API endpoint to update visibility by external ID
       const response = await this.makeRequest<{ 
-        data: { 
-          success: boolean; 
-          message: string; 
-          public_url?: string; 
-        } 
-      }>(`/api/v1/storage/files/by-external-id/${encodeURIComponent(externalId)}/visibility`, {
+        success?: boolean;
+        message?: string;
+        data?: {
+          file: {
+            id: string;
+            visibility: 'public' | 'private';
+            public_url?: string;
+          };
+        };
+      }>(`/api/v1/users/me/projects/${this.config.projectId}/files/external/${encodeURIComponent(externalId)}/visibility`, {
         method: 'PATCH',
         body: JSON.stringify({ visibility }),
       });
 
+      // Handle the new response format
+      const success = response.success ?? !!response.data?.file;
+      const message = response.message || 'File visibility updated successfully';
+      const publicUrl = response.data?.file?.public_url;
+
       return {
-        success: response.data.success,
+        success,
         requestedVisibility: visibility,
-        actualVisibility: visibility, // CrunchyCone now supports actual visibility changes
-        publicUrl: response.data.public_url,
-        message: response.data.message,
+        actualVisibility: success ? visibility : 'private',
+        publicUrl,
+        message,
         providerSpecific: {
           externalId,
           updatedViaAPI: true,
+          rawResponse: response, // Include raw response for debugging
         },
       };
     } catch (error) {
@@ -1176,25 +1202,35 @@ export class CrunchyConeProvider implements StorageProvider {
   async updateFileVisibilityById(fileId: string, visibility: 'public' | 'private'): Promise<FileVisibilityResult> {
     try {
       const response = await this.makeRequest<{ 
-        data: { 
-          success: boolean; 
-          message: string; 
-          public_url?: string; 
-        } 
-      }>(`/api/v1/storage/files/${fileId}/visibility`, {
+        success?: boolean;
+        message?: string;
+        data?: {
+          file: {
+            id: string;
+            visibility: 'public' | 'private';
+            public_url?: string;
+          };
+        };
+      }>(`/api/v1/users/me/projects/${this.config.projectId}/files/${fileId}/visibility`, {
         method: 'PATCH',
         body: JSON.stringify({ visibility }),
       });
 
+      // Handle the new response format
+      const success = response.success ?? !!response.data?.file;
+      const message = response.message || 'File visibility updated successfully';
+      const publicUrl = response.data?.file?.public_url;
+
       return {
-        success: response.data.success,
+        success,
         requestedVisibility: visibility,
-        actualVisibility: visibility,
-        publicUrl: response.data.public_url,
-        message: response.data.message,
+        actualVisibility: success ? visibility : 'private',
+        publicUrl,
+        message,
         providerSpecific: {
           fileId,
           updatedViaAPI: true,
+          rawResponse: response, // Include raw response for debugging
         },
       };
     } catch (error) {

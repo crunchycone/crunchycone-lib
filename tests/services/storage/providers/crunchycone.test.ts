@@ -705,10 +705,14 @@ describe('CrunchyConeProvider', () => {
           ok: true,
           status: 200,
           json: () => Promise.resolve({
+            success: true,
+            message: 'File visibility updated successfully',
             data: {
-              success: true,
-              message: 'File visibility updated to public',
-              public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+              file: {
+                id: 'test-file-id',
+                visibility: 'public',
+                public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+              },
             },
           }),
         });
@@ -719,15 +723,15 @@ describe('CrunchyConeProvider', () => {
         expect(result.requestedVisibility).toBe('public');
         expect(result.actualVisibility).toBe('public');
         expect(result.publicUrl).toBe('https://bucket.region.digitaloceanspaces.com/path/to/file.txt');
-        expect(result.message).toBe('File visibility updated to public');
-        expect(result.providerSpecific).toEqual({
+        expect(result.message).toBe('File visibility updated successfully');
+        expect(result.providerSpecific).toMatchObject({
           fileId: 'test-file-id',
           updatedViaAPI: true,
         });
 
         // Verify the API was called with correct endpoint and data
         expect(mockFetch).toHaveBeenLastCalledWith(
-          'https://api.crunchycone.com/api/v1/storage/files/test-file-id/visibility',
+          'https://api.crunchycone.com/api/v1/users/me/projects/test-project-id/files/test-file-id/visibility',
           {
             method: 'PATCH',
             signal: expect.any(AbortSignal),
@@ -764,10 +768,14 @@ describe('CrunchyConeProvider', () => {
           ok: true,
           status: 200,
           json: () => Promise.resolve({
+            success: true,
+            message: 'File visibility updated successfully',
             data: {
-              success: true,
-              message: 'File visibility updated to private',
-              public_url: '',
+              file: {
+                id: 'test-file-id',
+                visibility: 'private',
+                public_url: null,
+              },
             },
           }),
         });
@@ -777,8 +785,8 @@ describe('CrunchyConeProvider', () => {
         expect(result.success).toBe(true);
         expect(result.requestedVisibility).toBe('private');
         expect(result.actualVisibility).toBe('private');
-        expect(result.publicUrl).toBe('');
-        expect(result.message).toBe('File visibility updated to private');
+        expect(result.publicUrl).toBeNull();
+        expect(result.message).toBe('File visibility updated successfully');
       });
 
       it('should handle file not found error', async () => {
@@ -843,10 +851,14 @@ describe('CrunchyConeProvider', () => {
           ok: true,
           status: 200,
           json: () => Promise.resolve({
+            success: true,
+            message: 'File visibility updated successfully',
             data: {
-              success: true,
-              message: 'File visibility updated to public',
-              public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+              file: {
+                id: 'test-file-id',
+                visibility: 'public',
+                public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+              },
             },
           }),
         });
@@ -857,15 +869,15 @@ describe('CrunchyConeProvider', () => {
         expect(result.requestedVisibility).toBe('public');
         expect(result.actualVisibility).toBe('public');
         expect(result.publicUrl).toBe('https://bucket.region.digitaloceanspaces.com/path/to/file.txt');
-        expect(result.message).toBe('File visibility updated to public');
-        expect(result.providerSpecific).toEqual({
+        expect(result.message).toBe('File visibility updated successfully');
+        expect(result.providerSpecific).toMatchObject({
           externalId: 'test-external-id',
           updatedViaAPI: true,
         });
 
         // Verify the API was called with correct endpoint
         expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.crunchycone.com/api/v1/storage/files/by-external-id/test-external-id/visibility',
+          'https://api.crunchycone.com/api/v1/users/me/projects/test-project-id/files/external/test-external-id/visibility',
           {
             method: 'PATCH',
             signal: expect.any(AbortSignal),
@@ -903,10 +915,14 @@ describe('CrunchyConeProvider', () => {
           ok: true,
           status: 200,
           json: () => Promise.resolve({
+            success: true,
+            message: 'File visibility updated successfully',
             data: {
-              success: true,
-              message: 'File visibility updated to public',
-              public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+              file: {
+                id: 'test-file-id',
+                visibility: 'public',
+                public_url: 'https://bucket.region.digitaloceanspaces.com/path/to/file.txt',
+              },
             },
           }),
         });
@@ -917,15 +933,15 @@ describe('CrunchyConeProvider', () => {
         expect(result.requestedVisibility).toBe('public');
         expect(result.actualVisibility).toBe('public');
         expect(result.publicUrl).toBe('https://bucket.region.digitaloceanspaces.com/path/to/file.txt');
-        expect(result.message).toBe('File visibility updated to public');
-        expect(result.providerSpecific).toEqual({
+        expect(result.message).toBe('File visibility updated successfully');
+        expect(result.providerSpecific).toMatchObject({
           fileId: 'test-file-id',
           updatedViaAPI: true,
         });
 
         // Verify the API was called with correct endpoint
         expect(mockFetch).toHaveBeenCalledWith(
-          'https://api.crunchycone.com/api/v1/storage/files/test-file-id/visibility',
+          'https://api.crunchycone.com/api/v1/users/me/projects/test-project-id/files/test-file-id/visibility',
           {
             method: 'PATCH',
             signal: expect.any(AbortSignal),
