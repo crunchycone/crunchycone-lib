@@ -233,7 +233,7 @@ export class CrunchyConeProvider implements StorageProvider {
       // Step 2: Upload file content to the presigned URL
       await this.uploadToPresignedUrl(descriptor.upload_url, fileData, contentType, fileSize);
 
-      // Step 3: Complete the upload
+      // Step 3: Complete the upload - REQUIRED BY API
       await this.completeFileUpload(descriptor.file_id, fileSize);
 
       // Step 4: Get the final file metadata to return complete info
@@ -362,7 +362,8 @@ export class CrunchyConeProvider implements StorageProvider {
   }
 
   private async completeFileUpload(fileId: string, actualFileSize: number): Promise<void> {
-    await this.makeRequest(`/api/v1/storage/files/${fileId}/upload`, {
+    // Use the /complete endpoint instead of /upload to avoid overwriting file content
+    await this.makeRequest(`/api/v1/storage/files/${fileId}/complete`, {
       method: 'POST',
       body: JSON.stringify({
         actual_file_size: actualFileSize,

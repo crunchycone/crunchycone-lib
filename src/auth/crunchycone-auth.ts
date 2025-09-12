@@ -187,11 +187,11 @@ export function getCrunchyConeAPIURL(): string {
       return 'https://api.crunchycone.dev';
     }
     // For any other environment (prod, staging, etc.), use production URL
-    return 'https://api.crunchycone.dev';
+    return 'https://api.crunchycone.com';
   }
 
   // Default fallback
-  return 'https://api.crunchycone.dev';
+  return 'https://api.crunchycone.com';
 }
 
 /**

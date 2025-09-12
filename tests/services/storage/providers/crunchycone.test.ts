@@ -219,7 +219,7 @@ describe('CrunchyConeProvider', () => {
       });
 
       // 3. Complete upload
-      expect(mockFetch).toHaveBeenNthCalledWith(3, 'https://api.crunchycone.com/api/v1/storage/files/test-file-id/upload', {
+      expect(mockFetch).toHaveBeenNthCalledWith(3, 'https://api.crunchycone.com/api/v1/storage/files/test-file-id/complete', {
         method: 'POST',
         headers: {
           'X-API-Key': 'test-api-key',
