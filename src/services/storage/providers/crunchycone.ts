@@ -26,6 +26,8 @@ export interface CrunchyConeFileMetadata {
   actual_file_size: number;
   storage_key: string;
   upload_status: 'pending' | 'uploading' | 'completed' | 'failed';
+  visibility: 'public' | 'private';
+  public_url?: string | null;
   external_id?: string;
   metadata: Record<string, string>;
   created_at: string;
@@ -1021,16 +1023,17 @@ export class CrunchyConeProvider implements StorageProvider {
         throw new Error(`File with key ${key} not found`);
       }
 
-      // Check visibility preference from metadata
-      const visibilityPreference = fileMetadata.metadata?.visibility || 'private';
+      // Check actual visibility from the file object
+      const actualVisibility = fileMetadata.visibility || 'private';
+      const isPublic = actualVisibility === 'public';
       
       return {
-        visibility: 'private', // CrunchyCone always uses authenticated access
-        canMakePublic: false, // No native public URL support
+        visibility: actualVisibility,
+        canMakePublic: true, // CrunchyCone supports public/private visibility
         canMakePrivate: true,
         supportsTemporaryAccess: true, // Signed URLs provide temporary access
-        message: visibilityPreference === 'public' 
-          ? 'File preference is public, but CrunchyCone uses authenticated access for all files. Access via signed URLs.'
+        message: isPublic 
+          ? `File is ${actualVisibility} and ${fileMetadata.public_url ? 'has a public URL' : 'can be accessed via signed URLs'}`
           : 'File is private and requires authentication. Access via signed URLs.',
       };
     } catch (error) {
@@ -1045,16 +1048,17 @@ export class CrunchyConeProvider implements StorageProvider {
         `/api/v1/storage/files/by-external-id/${encodeURIComponent(externalId)}`,
       );
 
-      // Check visibility preference from metadata
-      const visibilityPreference = response.data.metadata?.visibility || 'private';
+      // Check actual visibility from the file object
+      const actualVisibility = response.data.visibility || 'private';
+      const isPublic = actualVisibility === 'public';
       
       return {
-        visibility: 'private', // CrunchyCone always uses authenticated access
-        canMakePublic: false, // No native public URL support
+        visibility: actualVisibility,
+        canMakePublic: true, // CrunchyCone supports public/private visibility
         canMakePrivate: true,
         supportsTemporaryAccess: true, // Signed URLs provide temporary access
-        message: visibilityPreference === 'public' 
-          ? 'File preference is public, but CrunchyCone uses authenticated access for all files. Access via signed URLs.'
+        message: isPublic 
+          ? `File is ${actualVisibility} and ${response.data.public_url ? 'has a public URL' : 'can be accessed via signed URLs'}`
           : 'File is private and requires authentication. Access via signed URLs.',
       };
     } catch (error) {

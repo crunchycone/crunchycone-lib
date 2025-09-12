@@ -1011,7 +1011,7 @@ describe('CrunchyConeProvider', () => {
       });
     });
 
-    it('should get file visibility status', async () => {
+    it('should get file visibility status for public file', async () => {
       // Mock finding the file
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -1020,7 +1020,35 @@ describe('CrunchyConeProvider', () => {
             files: [{
               file_id: 'test-file-id',
               storage_key: 'test-key',
-              metadata: { visibility: 'public' },
+              visibility: 'public',
+              public_url: 'https://public.example.com/file.jpg',
+              metadata: { category: 'image' },
+            }],
+          },
+        }),
+      });
+
+      const result = await provider.getFileVisibility('test-key');
+
+      expect(result.visibility).toBe('public');
+      expect(result.canMakePublic).toBe(true);
+      expect(result.canMakePrivate).toBe(true);
+      expect(result.supportsTemporaryAccess).toBe(true);
+      expect(result.message).toContain('File is public and has a public URL');
+    });
+
+    it('should get file visibility status for private file', async () => {
+      // Mock finding the file
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: {
+            files: [{
+              file_id: 'test-file-id',
+              storage_key: 'test-key',
+              visibility: 'private',
+              public_url: null,
+              metadata: { category: 'document' },
             }],
           },
         }),
@@ -1029,10 +1057,10 @@ describe('CrunchyConeProvider', () => {
       const result = await provider.getFileVisibility('test-key');
 
       expect(result.visibility).toBe('private');
-      expect(result.canMakePublic).toBe(false);
+      expect(result.canMakePublic).toBe(true);
       expect(result.canMakePrivate).toBe(true);
       expect(result.supportsTemporaryAccess).toBe(true);
-      expect(result.message).toContain('authenticated access for all files');
+      expect(result.message).toContain('File is private and requires authentication');
     });
   });
 
