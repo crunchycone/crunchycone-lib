@@ -13,6 +13,9 @@ export * from './validation';
 // Helper utilities
 export * from './utils';
 
+// Storage synchronization
+export * from './sync';
+
 // Note: Individual storage providers are available via specific imports to avoid loading optional dependencies:
 // - import { LocalStorageProvider } from 'crunchycone-lib/storage/providers/local'
 // - import { S3CompatibleProvider } from 'crunchycone-lib/storage/providers/s3'
