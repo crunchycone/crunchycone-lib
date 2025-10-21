@@ -216,11 +216,8 @@ export class CrunchyConeProvider implements StorageProvider {
     // Generate file path from key or use default pattern
     const filePath = options.key || this.generateDefaultPath(options.external_id, options.filename);
 
-    // Step 1: Create file descriptor with visibility metadata
-    const metadata = {
-      ...options.metadata || {},
-      visibility: options.public ? 'public' : 'private',
-    };
+    // Step 1: Create file descriptor with visibility as top-level parameter
+    const visibility: 'public' | 'private' = options.public ? 'public' : 'private';
 
     const descriptor = await this.createFileDescriptor({
       file_path: filePath,
@@ -228,7 +225,8 @@ export class CrunchyConeProvider implements StorageProvider {
       content_type: contentType,
       file_size: fileSize,
       external_id: options.external_id,
-      metadata,
+      visibility,
+      metadata: options.metadata || {},
     });
 
     try {
@@ -289,6 +287,7 @@ export class CrunchyConeProvider implements StorageProvider {
     content_type: string;
     file_size: number;
     external_id: string;
+    visibility: 'public' | 'private';
     metadata: Record<string, string>;
   }): Promise<CrunchyConeFileDescriptor> {
     const response = await this.makeRequest<{ data: CrunchyConeFileDescriptor }>('/api/v1/storage/files', {

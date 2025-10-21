@@ -206,7 +206,8 @@ describe('CrunchyConeProvider', () => {
       expect(firstCallBody.content_type).toBe('text/plain');
       expect(firstCallBody.file_size).toBe(11);
       expect(firstCallBody.external_id).toBe('test-external-id');
-      expect(firstCallBody.metadata).toEqual({ category: 'test', visibility: 'private' });
+      expect(firstCallBody.visibility).toBe('private'); // Visibility is now top-level
+      expect(firstCallBody.metadata).toEqual({ category: 'test' }); // Metadata no longer contains visibility
 
       // 2. Upload to presigned URL
       expect(mockFetch).toHaveBeenNthCalledWith(2, 'https://presigned-upload-url.com', {
