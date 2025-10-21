@@ -1,7 +1,7 @@
-import { 
-  StorageProvider, 
-  StorageUploadOptions, 
-  StorageUploadResult, 
+import {
+  StorageProvider,
+  StorageUploadOptions,
+  StorageUploadResult,
   StorageFileInfo,
   ListFilesOptions,
   ListFilesResult,
@@ -10,6 +10,8 @@ import {
   FileVisibilityResult,
   FileVisibilityStatus,
   FileUrlOptions,
+  FileStreamOptions,
+  FileStreamResult,
 } from '../types';
 import { createReadStream, createWriteStream, promises as fs } from 'fs';
 import { join, dirname, extname } from 'path';
@@ -167,8 +169,67 @@ export class LocalStorageProvider implements StorageProvider {
     if (!fileInfo) {
       throw new Error(`File with external_id "${externalId}" not found`);
     }
-    
+
     return this.getFileUrl(fileInfo.key, expiresIn, options);
+  }
+
+  async getFileStream(key: string, _options?: FileStreamOptions): Promise<FileStreamResult> {
+    const fullPath = join(this.basePath, key);
+
+    // Check if file exists
+    try {
+      const stats = await fs.stat(fullPath);
+
+      // Create a ReadableStream from the file
+      const nodeStream = createReadStream(fullPath);
+
+      // Convert Node.js Readable to Web ReadableStream
+      const webStream = Readable.toWeb(nodeStream) as ReadableStream;
+
+      // Get metadata
+      const metadataPath = `${fullPath}.json`;
+      let contentType = 'application/octet-stream';
+      let lastModified: Date | undefined;
+      let etag: string | undefined;
+
+      try {
+        const metadataContent = await fs.readFile(metadataPath, 'utf-8');
+        const metadata = JSON.parse(metadataContent);
+        contentType = metadata.contentType || contentType;
+        if (metadata.lastModified) {
+          lastModified = new Date(metadata.lastModified);
+        }
+        etag = metadata.etag;
+      } catch {
+        // Metadata file doesn't exist, use default content type
+        lastModified = new Date(stats.mtime);
+      }
+
+      return {
+        stream: webStream,
+        contentType,
+        contentLength: stats.size,
+        isPartialContent: false,
+        streamType: 'web' as const,
+        acceptsRanges: false,
+        lastModified,
+        etag,
+      };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error(`File not found: ${key}`);
+      }
+      throw error;
+    }
+  }
+
+  async getFileStreamByExternalId(externalId: string, options?: FileStreamOptions): Promise<FileStreamResult> {
+    const fileInfo = await this.findFileByExternalId(externalId);
+    if (!fileInfo) {
+      throw new Error(`File with external_id "${externalId}" not found`);
+    }
+
+    return this.getFileStream(fileInfo.key, options);
   }
 
   async fileExists(key: string): Promise<boolean> {

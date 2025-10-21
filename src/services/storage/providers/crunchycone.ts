@@ -398,6 +398,12 @@ export class CrunchyConeProvider implements StorageProvider {
       throw new Error(`File with storage key ${key} not found`);
     }
 
+    // If file is public and has a public_url, return it directly (no auth required)
+    if (fileInfo.visibility === 'public' && fileInfo.public_url) {
+      return fileInfo.public_url;
+    }
+
+    // Otherwise, generate a signed URL (requires API authentication)
     // Build download URL with content disposition support
     const disposition = (options?.disposition === 'inline') ? 'inline' : 'attachment';
     const downloadUrl = `${this.config.apiUrl}/api/v1/storage/files/${fileInfo.file_id}/download?returnSignedUrl=true&disposition=${disposition}`;
@@ -409,7 +415,13 @@ export class CrunchyConeProvider implements StorageProvider {
     const response = await this.makeRequest<{ data: CrunchyConeFileMetadata }>(
       `/api/v1/storage/files/by-external-id/${encodeURIComponent(externalId)}`,
     );
-    
+
+    // If file is public and has a public_url, return it directly (no auth required)
+    if (response.data.visibility === 'public' && response.data.public_url) {
+      return response.data.public_url;
+    }
+
+    // Otherwise, generate a signed URL (requires API authentication)
     // Build download URL with content disposition support
     const disposition = (options?.disposition === 'inline') ? 'inline' : 'attachment';
     const downloadUrl = `${this.config.apiUrl}/api/v1/storage/files/${response.data.file_id}/download?returnSignedUrl=true&disposition=${disposition}`;

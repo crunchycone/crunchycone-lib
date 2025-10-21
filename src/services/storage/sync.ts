@@ -393,16 +393,55 @@ async function copyFileWithMetadata(
   destination: StorageProvider,
   preserveTimestamps?: boolean,
 ): Promise<void> {
-  // Get file URL from source
-  const url = await source.getFileUrlByExternalId(file.external_id);
+  // Get file content - prefer direct stream access over HTTP fetch
+  let buffer: Buffer;
 
-  // Download file content
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
+  if (source.getFileStreamByExternalId) {
+    // Use direct file stream access (more efficient for server-side sync)
+    const streamResult = await source.getFileStreamByExternalId(file.external_id);
+    if (!streamResult || !streamResult.stream) {
+      throw new Error(`Failed to get file stream for ${file.external_id}`);
+    }
+
+    // Convert stream to buffer based on stream type
+    const chunks: Uint8Array[] = [];
+
+    if (streamResult.streamType === 'web') {
+      // Handle Web ReadableStream
+      const reader = (streamResult.stream as ReadableStream).getReader();
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    } else {
+      // Handle Node.js ReadableStream
+      const nodeStream = streamResult.stream as NodeJS.ReadableStream;
+
+      await new Promise<void>((resolve, reject) => {
+        nodeStream.on('data', (chunk: Buffer) => {
+          chunks.push(new Uint8Array(chunk));
+        });
+        nodeStream.on('end', () => resolve());
+        nodeStream.on('error', reject);
+      });
+    }
+
+    buffer = Buffer.concat(chunks);
+  } else {
+    // Fallback to HTTP fetch for providers without direct stream access
+    const url = await source.getFileUrlByExternalId(file.external_id);
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download file: ${response.status} ${response.statusText}`);
+    }
+    buffer = Buffer.from(await response.arrayBuffer());
   }
-
-  const buffer = Buffer.from(await response.arrayBuffer());
 
   // Get visibility status from source
   let visibility: 'public' | 'private' = 'private';
@@ -447,7 +486,18 @@ async function copyFileWithMetadata(
   syncMetadata._original_visibility = visibility;
 
   // Upload to destination with all metadata preserved
-  await destination.uploadFile({
+  console.log('[Sync] Uploading to destination:', {
+    provider: destination.constructor.name,
+    external_id: file.external_id,
+    key: file.key,
+    filename: file.key.split('/').pop(),
+    contentType: file.contentType,
+    size: file.size,
+    bufferSize: buffer.length,
+    visibility,
+  });
+
+  const uploadResult = await destination.uploadFile({
     buffer,
     external_id: file.external_id,
     key: file.key, // Preserves full folder/path structure
@@ -456,6 +506,14 @@ async function copyFileWithMetadata(
     size: file.size,
     public: visibility === 'public',
     metadata: syncMetadata,
+  });
+
+  console.log('[Sync] Upload result:', {
+    external_id: uploadResult.external_id,
+    key: uploadResult.key,
+    url: uploadResult.url,
+    size: uploadResult.size,
+    visibility: uploadResult.visibility,
   });
 
   // Explicitly set visibility after upload (some providers may not respect the 'public' flag)
