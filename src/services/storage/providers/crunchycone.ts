@@ -253,8 +253,8 @@ export class CrunchyConeProvider implements StorageProvider {
         size: fileMetadata.actual_file_size,
         contentType: fileMetadata.content_type,
         metadata: fileMetadata.metadata,
-        visibility: 'private', // CrunchyCone manages visibility server-side
-        publicUrl: options.public ? signedUrl : undefined, // Use same signed URL for public access
+        visibility: fileMetadata.visibility || 'private', // Use actual visibility from API response
+        publicUrl: fileMetadata.public_url || undefined, // Use actual public URL from API response
       };
     } catch (error) {
       // Enhanced error reporting with detailed context
