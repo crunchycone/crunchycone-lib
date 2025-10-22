@@ -96,6 +96,7 @@ export class LocalStorageProvider implements StorageProvider {
       }
 
       const url = `${this.baseUrl}/${key}`;
+      const visibility: 'public' | 'private' = options.public ? 'public' : 'private';
 
       const metadata = {
         external_id: options.external_id,
@@ -105,6 +106,7 @@ export class LocalStorageProvider implements StorageProvider {
         size,
         lastModified: new Date().toISOString(),
         url,
+        visibility,
         metadata: options.metadata,
       };
 
@@ -117,7 +119,7 @@ export class LocalStorageProvider implements StorageProvider {
         size,
         contentType,
         metadata: options.metadata,
-        visibility: 'private', // Always private - public access handled by web server
+        visibility,
         publicUrl: options.public ? url : undefined,
       };
     } catch (error) {
