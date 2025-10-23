@@ -274,7 +274,7 @@ export class LocalStorageProvider implements StorageProvider {
               contentType: metadata.contentType,
               lastModified: new Date(metadata.lastModified),
               metadata: metadata.metadata,
-              visibility: 'private', // Always private on disk
+              visibility: metadata.visibility || 'private',
               publicUrl: metadata.visibility === 'public' ? metadata.url : undefined,
             };
           }
@@ -318,7 +318,7 @@ export class LocalStorageProvider implements StorageProvider {
             contentType: metadata.contentType,
             lastModified: new Date(metadata.lastModified),
             metadata: options.includeMetadata !== false ? metadata.metadata : undefined,
-            visibility: 'private', // Always private on disk
+            visibility: metadata.visibility || 'private',
             publicUrl: metadata.visibility === 'public' ? metadata.url : undefined,
           };
           
@@ -384,7 +384,7 @@ export class LocalStorageProvider implements StorageProvider {
             contentType: metadata.contentType,
             lastModified: new Date(metadata.lastModified),
             metadata: options.includeMetadata !== false ? metadata.metadata : undefined,
-            visibility: 'private', // Always private on disk
+            visibility: metadata.visibility || 'private',
             publicUrl: metadata.visibility === 'public' ? metadata.url : undefined,
           };
           
